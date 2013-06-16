@@ -1,0 +1,49 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	<!-- add Burro section to main menu -->
+	<file name="admin/view/template/common/header.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<li id="help">]]></search>
+			<add><![CDATA[<li id="burro"><a class="top">Burro</a>
+        <ul>
+          <li><a href="<? echo $this->url->link('burro/home', 'token=' . $this->session->data['token'], 'SSL'); ?>">About</a></li>
+        </ul>
+      </li>
+      <li id="help">]]></add>
+		</operation>
+	</file>
+	
+	<!-- add Burro function to model of product -->
+	<file name="admin/view/template/catalog/product_form.tpl">
+		<operation>
+			<search position="replace"><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a>]]></search>
+			<add><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a><a href="#tab-burro">Burro</a>]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[<div id="tab-design">]]></search>
+			<add><![CDATA[
+        <div id="tab-burro">
+          <table class="list">
+            <thead>
+              <tr>
+                <td class="left"><?php echo "Parameter:"; ?></td>
+                <td class="left"><?php echo "Value:"; ?></td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="left"></td>
+                <td class="left"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="tab-design">]]></add>
+		</operation>
+	</file>
+	
+</modification>
