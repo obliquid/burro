@@ -8,41 +8,166 @@
 	<file name="admin/view/template/common/header.tpl">
 		<operation>
 			<search position="replace"><![CDATA[<li id="help">]]></search>
-			<add><![CDATA[<li id="burro"><a class="top">Burro</a>
+			<add><![CDATA[<li id="hosting"><a class="top">Hostings</a>
         <ul>
-          <li><a href="<? echo $this->url->link('burro/home', 'token=' . $this->session->data['token'], 'SSL'); ?>">About</a></li>
+          <li><a href="<? echo $this->url->link('burro/config', 'token=' . $this->session->data['token'], 'SSL'); ?>">Configuration</a></li>
+          <li><a href="<? echo $this->url->link('burro/services', 'token=' . $this->session->data['token'], 'SSL'); ?>">Services</a></li>
+          <li><a href="<? echo $this->url->link('burro/home', 'token=' . $this->session->data['token'], 'SSL'); ?>">About burro</a></li>
         </ul>
       </li>
       <li id="help">]]></add>
 		</operation>
 	</file>
 	
-	<!-- add Burro function to model of product -->
+	<!-- add Burro to product controller -->
+	<file name="admin/controller/catalog/product.php">
+		<!-- getForm -->
+		<operation>
+			<search position="replace"><![CDATA[$this->data['button_add_special'] = $this->language->get('button_add_special');]]></search>
+			<add><![CDATA[$this->data['button_add_hosting'] = 'Add Service';
+		$this->data['button_add_special'] = $this->language->get('button_add_special');]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[$this->data['tab_special'] = $this->language->get('tab_special');]]></search>
+			<add><![CDATA[$this->data['tab_hosting'] = 'Hostings';
+		$this->data['tab_special'] = $this->language->get('tab_special');]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[if (isset($this->request->post['product_special'])) {]]></search>
+			<add><![CDATA[if (isset($this->request->post['product_hosting'])) {
+			$this->data['product_hostings'] = $this->request->post['product_hosting'];
+		} elseif (isset($this->request->get['product_id'])) {
+			$this->data['product_hostings'] = $this->model_catalog_product->getProductHostings($this->request->get['product_id']);
+		} else {
+			$this->data['product_hostings'] = array();
+		}
+		
+		if (isset($this->request->post['product_special'])) {]]></add>
+		</operation>
+		
+	</file>
+	
+	<!-- add Burro to product model -->
+	<file name="admin/model/catalog/product.php">
+		<!-- insert of new product -->
+		<!-- note: this replace should take place 2 times in this file	-->
+		<operation>
+			<search position="replace"><![CDATA[if (isset($data['product_special'])) {]]></search>
+			<add><![CDATA[if (isset($data['product_hosting'])) {
+			foreach ($data['product_hosting'] as $product_hosting) {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "product_hosting SET product_id = '" . (int)$product_id . "', service = '" . $product_hosting['service'] . "', duration = '" . (int)$product_hosting['duration'] . "', size = '" . (int)$product_hosting['size'] . "', quantity = '" . $product_hosting['quantity'] . "'" );
+			}
+		}
+		
+		if (isset($data['product_special'])) {]]></add>
+		</operation>
+		
+		<!-- delete of a product -->
+		<!-- note: this replace should take place 2 times in this file	-->
+		<operation>
+			<search position="replace"><![CDATA[$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");]]></search>
+			<add><![CDATA[$this->db->query("DELETE FROM " . DB_PREFIX . "product_hosting WHERE product_id = '" . (int)$product_id . "'");
+		$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");]]></add>
+		</operation>
+		
+		<!-- copy of a product -->
+		<operation>
+			<search position="replace"><![CDATA[$data = array_merge($data, array('product_special' => $this->getProductSpecials($product_id)));]]></search>
+			<add><![CDATA[$data = array_merge($data, array('product_hosting' => $this->getProductHostings($product_id)));
+			$data = array_merge($data, array('product_special' => $this->getProductSpecials($product_id)));]]></add>
+		</operation>
+		
+		<!-- get a product -->
+		<operation>
+			<search position="replace"><![CDATA[public function getProductSpecials($product_id) {]]></search>
+			<add><![CDATA[public function getProductHostings($product_id) {
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_hosting WHERE product_id = '" . (int)$product_id . "' ORDER BY product_hosting_id");
+		
+		return $query->rows;
+	}
+	
+	public function getProductSpecials($product_id) {]]></add>
+		</operation>
+		
+	</file>
+	
+	
+	<!-- add Burro view to admin product template -->
 	<file name="admin/view/template/catalog/product_form.tpl">
 		<operation>
 			<search position="replace"><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a>]]></search>
-			<add><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a><a href="#tab-burro">Burro</a>]]></add>
+			<add><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a><a href="#tab-hosting">Hostings</a>]]></add>
 		</operation>
 		<operation>
 			<search position="replace"><![CDATA[<div id="tab-design">]]></search>
-			<add><![CDATA[
-        <div id="tab-burro">
-          <table class="list">
+			<add><![CDATA[<div id="tab-hosting">
+          <table id="hosting" class="list">
             <thead>
               <tr>
-                <td class="left"><?php echo "Parameter:"; ?></td>
-                <td class="left"><?php echo "Value:"; ?></td>
+                <td class="left">Service:</td>
+                <td class="right">Duration (months):</td>
+                <td class="right">Size (GBytes):</td>
+                <td class="right">Quantity:</td>
+                <td></td>
               </tr>
             </thead>
-            <tbody>
+            <?php $hosting_row = 0; ?>
+            <?php foreach ($product_hostings as $product_hosting) { ?>
+            <tbody id="hosting-row<?php echo $hosting_row; ?>">
               <tr>
-                <td class="left"></td>
-                <td class="left"></td>
+                <td class="left"><select name="product_hosting[<?php echo $hosting_row; ?>][service]">
+                    <option value="domain" <?php if ( $product_hosting['service'] == 'domain' ) echo ' selected="selected" '; ?> >Domain Name</option>
+                    <option value="webhosting" <?php if ( $product_hosting['service'] == 'webhosting' ) echo ' selected="selected" '; ?> >Web Hosting</option>
+                    <option value="webhosting_space" <?php if ( $product_hosting['service'] == 'webhosting_space' ) echo ' selected="selected" '; ?> >Web Hosting Additional Space</option>
+                    <option value="mailbox" <?php if ( $product_hosting['service'] == 'mailbox' ) echo ' selected="selected" '; ?> >Mailbox</option>
+                    <option value="mailbox_space" <?php if ( $product_hosting['service'] == 'mailbox_space' ) echo ' selected="selected" '; ?> >Mailbox Additional Space</option>
+                    <option value="database" <?php if ( $product_hosting['service'] == 'database' ) echo ' selected="selected" '; ?> >Database</option>
+                  </select></td>
+                <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][duration]" value="<?php echo $product_hosting['duration']; ?>" size="2" /></td>
+                <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][size]" value="<?php echo $product_hosting['size']; ?>" /></td>
+                <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][quantity]" value="<?php echo $product_hosting['quantity']; ?>" /></td>
+                <td class="left"><a onclick="$('#hosting-row<?php echo $hosting_row; ?>').remove();" class="button"><?php echo $button_remove; ?></a></td>
               </tr>
             </tbody>
+            <?php $hosting_row++; ?>
+            <?php } ?>
+            <tfoot>
+              <tr>
+                <td colspan="4"></td>
+                <td class="left"><a onclick="addHosting();" class="button"><?php echo $button_add_hosting; ?></a></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
         <div id="tab-design">]]></add>
+		</operation>
+		<operation>
+			<search position="replace"><![CDATA[var special_row = <?php echo $special_row; ?>;]]></search>
+			<add><![CDATA[var hosting_row = <?php echo $hosting_row; ?>;
+
+function addHosting() {
+	html  = '<tbody id="hosting-row' + hosting_row + '">';
+	html += '  <tr>'; 
+    html += '    <td class="left"><select name="product_hosting[' + hosting_row + '][service]">';
+    html += '      <option value="domain">Domain Name</option>';
+    html += '      <option value="webhosting">Web Hosting</option>';
+    html += '      <option value="webhosting_space">Web Hosting Additional Space</option>';
+    html += '      <option value="mailbox">Mailbox</option>';
+    html += '      <option value="mailbox_space">Mailbox Additional Space</option>';
+    html += '      <option value="database">Database</option>';
+    html += '    </select></td>';		
+    html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][duration]" value="" size="4" /></td>';
+	html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][size]" value="" size="4" /></td>';
+    html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][quantity]" value=""  size="4" /></td>';
+	html += '    <td class="left"><a onclick="$(\'#hosting-row' + hosting_row + '\').remove();" class="button"><?php echo $button_remove; ?></a></td>';
+	html += '  </tr>';
+    html += '</tbody>';
+	
+	$('#hosting tfoot').before(html);
+	
+	hosting_row++;
+}
+var special_row = <?php echo $special_row; ?>;]]></add>
 		</operation>
 	</file>
 	

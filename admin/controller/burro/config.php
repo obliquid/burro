@@ -1,12 +1,29 @@
 <?
 	
-class ControllerBurroHome extends Controller{ 
+class ControllerBurroConfig extends Controller{ 
 	public function index(){
 		// VARS
-		$template="burro/home.tpl"; // .tpl location and file
-		$this->language->load('burro/home');
-		$this->load->model('burro/home');
+		$template="burro/config.tpl"; // .tpl location and file		
+		$this->language->load('burro/config');
+		$this->load->model('burro/config');
 		$this->document->setTitle($this->language->get('heading_title'));
+		
+		//add burro tables to db, if they do not exist already
+		global $log;
+		//$log->write('sokaaaa');
+		$this->model_burro_config->updateDbForBurro();
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		
 		//vars for template
 		$this->data['heading_title'] = $this->language->get('heading_title');		
@@ -19,8 +36,8 @@ class ControllerBurroHome extends Controller{
       		'separator' => false
    		);
    		$this->data['breadcrumbs'][] = array(
-       		'text'      => 'Hostings : About burro',
-			'href'      => $this->url->link('burro/home', 'token=' . $this->session->data['token'], 'SSL'),
+       		'text'      => 'Hostings : Configuration',
+			'href'      => $this->url->link('burro/config', 'token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 		$this->data['error_warning'] = "";

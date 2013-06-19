@@ -1,11 +1,11 @@
 <?
 	
-class ControllerBurroHome extends Controller{ 
+class ControllerBurroServices extends Controller{ 
 	public function index(){
 		// VARS
-		$template="burro/home.tpl"; // .tpl location and file
-		$this->language->load('burro/home');
-		$this->load->model('burro/home');
+		$template="burro/services.tpl"; // .tpl location and file
+		$this->language->load('burro/services');
+		$this->load->model('burro/services');
 		$this->document->setTitle($this->language->get('heading_title'));
 		
 		//vars for template
@@ -19,8 +19,8 @@ class ControllerBurroHome extends Controller{
       		'separator' => false
    		);
    		$this->data['breadcrumbs'][] = array(
-       		'text'      => 'Hostings : About burro',
-			'href'      => $this->url->link('burro/home', 'token=' . $this->session->data['token'], 'SSL'),
+       		'text'      => 'Hostings : Services',
+			'href'      => $this->url->link('burro/services', 'token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 		$this->data['error_warning'] = "";

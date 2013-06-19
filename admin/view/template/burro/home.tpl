@@ -13,12 +13,14 @@
   <?php } ?>
   <div class="box">
     <div class="heading">
-      <h1>Burro</h1>
+      <h1><img src="view/image/hosting.png" alt="" /> <?php echo $heading_title; ?></h1>
       
       <div class="buttons"></div>
     </div>
     <div class="content">
-      <p><i>opencart ispconfig integration</i></p>
+      <p><i><?php echo $heading_subtitle; ?></i></p>
+      <p><?php echo $body01; ?> <a href="https://github.com/obliquid/burro" target="_blank">github.com/obliquid/burro</a></p>
+      <p>author: federico carrara ( federico - at - obliquid.it )</p>
     </div>
   </div>
 </div>
