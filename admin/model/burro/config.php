@@ -58,11 +58,12 @@ CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "product_hosting` (
   `service` varchar(32) NOT NULL,
   `duration` mediumint(9) NOT NULL,
   `size` mediumint(9) NOT NULL,
+  `extensions` text NOT NULL,
   `quantity` smallint(6) NOT NULL,
   PRIMARY KEY (`product_hosting_id`),
   KEY `product_id` (`product_id`),
   KEY `service` (`service`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;"; 
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;"; 
 			$query = $this->db->query($sql);
 			//$result = count($query->row);
 			//if ( $result > 0 ) $log->write("order_field");
