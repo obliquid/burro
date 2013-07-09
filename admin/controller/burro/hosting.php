@@ -1,11 +1,11 @@
 <?
 	
-class ControllerBurroServices extends Controller{ 
+class ControllerBurroHosting extends Controller{ 
 	public function index(){
 		// VARS
-		$template="burro/services.tpl"; // .tpl location and file
-		$this->language->load('burro/services');
-		$this->load->model('burro/services');
+		$template="burro/hosting.tpl"; // .tpl location and file
+		$this->language->load('burro/hosting');
+		$this->load->model('burro/hosting');
 		$this->document->setTitle($this->language->get('heading_title'));
 		
 		//vars for template
@@ -20,7 +20,7 @@ class ControllerBurroServices extends Controller{
    		);
    		$this->data['breadcrumbs'][] = array(
        		'text'      => 'Hostings : Services',
-			'href'      => $this->url->link('burro/services', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('burro/hosting', 'token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 		$this->data['error_warning'] = "";

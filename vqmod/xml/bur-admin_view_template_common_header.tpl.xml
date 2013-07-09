@@ -1,0 +1,31 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################  COMMON VIEW   ######################################################################## -->
+	<!-- ############################################################################################################################# -->
+	<!-- add Burro section to main menu -->
+	<file name="admin/view/template/common/header.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<li id="help">]]></search>
+			<add><![CDATA[<li id="hosting"><a class="top">Hostings</a>
+        <ul>
+          <li><a href="<? echo $this->url->link('burro/config', 'token=' . $this->session->data['token'], 'SSL'); ?>">Configuration</a></li>
+          <li><a href="<? echo $this->url->link('burro/hosting
+		  ', 'token=' . $this->session->data['token'], 'SSL'); ?>">Services</a></li>
+          <li><a href="<? echo $this->url->link('burro/home', 'token=' . $this->session->data['token'], 'SSL'); ?>">About burro</a></li>
+        </ul>
+      </li>
+      <li id="help">]]></add>
+		</operation>
+	</file>
+	
+
+
+
+
+
+</modification>	

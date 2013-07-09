@@ -54,9 +54,9 @@ form {
 	display: inline;
 }
 input[type='text'], input[type='password'], textarea {
-	background: #F8F8F8;
+	background: #FEFFD8;
 	border: 0px;
-	border-bottom: 1px solid #CCCCCC;
+	border-bottom: 1px solid #848900;
 	padding: 3px;
 	margin-left: 0px;
 	margin-right: 0px;
@@ -428,7 +428,7 @@ label {
 	color: #CCCCCC;
 	margin-bottom: 10px;
 }
-.success, .warning, .attention, .information {
+.success, .successDomain, .warning, .warningDomain, .attention, .information {
 	padding: 10px 10px 10px 33px;
 	margin-bottom: 15px;
 	color: #555555;
@@ -439,7 +439,7 @@ label {
 	border-radius: 5px 5px 5px 5px;
 	*/
 }
-.success {
+.success, .successDomain {
 	background: #EAF7D9 url('../image/success.png') 10px center no-repeat;
 	border-bottom: 1px solid #BBDF8D;
 	/*
@@ -449,7 +449,7 @@ label {
 	border-radius: 5px 5px 5px 5px;
 	*/
 }
-.warning {
+.warning, .warningDomain {
 	background: #FFD1D1 url('../image/warning.png') 10px center no-repeat;
 	border-bottom: 1px solid #F8ACAC;
 	/*
@@ -1735,4 +1735,18 @@ ul.box-filter > li ul {
 .box-content .name a {
 	font-size: 18px;
 	font-weight: bold;
+}
+
+.cart-info small,
+.mini-cart-info small {
+}
+
+#boxWhoisResult {
+	
+}
+
+.boxDomainAlternatives {
+	border-top: 1px solid #DBDEE1;
+	padding-top: 10px;
+	margin-top: 10px;
 }

@@ -1,0 +1,26 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	
+	
+	
+	<!-- add Hosting section in product tpl -->
+	<file name="catalog/view/theme/*/template/checkout/cart.tpl">
+	
+		<!-- if it's an hosting product, disable quantity		-->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<input type="text" name="quantity[<?php echo $product['key']; ?>]" value="<?php echo $product['quantity']; ?>" size="1" />]]></search>
+			<add><![CDATA[<input type="text" name="quantity[<?php echo $product['key']; ?>]" value="<?php echo $product['quantity']; ?>" size="1"  <?php if ( isset( $product['has_hostings'] ) && $product['has_hostings'] ) { ?> disabled <?php } ?>  />]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<input type="image" src="catalog/view/theme/default/image/update.png" alt="<?php echo $button_update; ?>" title="<?php echo $button_update; ?>" />]]></search>
+			<add><![CDATA[<?php if ( isset( $product['has_hostings'] ) && $product['has_hostings'] ) { ?><!-- <?php } ?><input type="image" src="catalog/view/theme/default/image/update.png" alt="<?php echo $button_update; ?>" title="<?php echo $button_update; ?>" /> <?php if ( isset( $product['has_hostings'] ) && $product['has_hostings'] ) { ?> --> <?php } ?>]]></add>
+		</operation>
+		
+	</file>
+	
+	
+</modification>

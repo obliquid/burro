@@ -34,11 +34,18 @@ with *burro* your customers buy hosting services on your opencart shop, and thes
 
 - first make sure you have *vqmod* installed!
 - then, simply copy (upload) *vqmod*, *catalog*, *image* and *admin* folders into your opencart installation, as usual. don't worry: no files will be overwritten.
-- don't forget to go to *System > Users > User Groups*, edit *Top Administrators* group, and add *Access* and *Modify* permissions to the new *burro/\** checkboxes
+- don't forget to go to *System > Users > User Groups*, edit *Top Administrators* group, and add *Access* and *Modify* permissions to the new *burro/\** and *module/domainCheck* checkboxes
 - now *burro* is installed, with its own menu: go to *Hostings > Configuration* and configure it.
-- for each product, in the editing form, you'll have a new tab *Hostings*: here you can set your product to be an hosting product, by adding to it multiple hosting services.
-- bonus: *burro* comes bundled with a custom minimalistic theme, named *obliquid theme*. using this theme is not necessary to correctly run *burro*, but if you like it, you can use it.
+- for each product, in the editing form, you'll have a new tab *Hostings*: here you can set your product to be an hosting product, by adding to it one or more hosting services.
+	- note: right now it's not allowed to add to a product more than one service of each type.
 - note: if you use a custom theme (that is not the default theme or the bundled obliquid theme), then read troubleshootings below.
+
+---
+
+### features
+
+- *burro* comes bundled with a custom minimalistic theme, named *obliquid theme*. using this theme is not necessary to correctly run *burro*, but if you like it, you can use it.
+- *burro* comes bundled with a Domain Check module, you can put it on your pages to let users do a realtime whois control for domain availability
 
 ---
 
@@ -46,8 +53,8 @@ with *burro* your customers buy hosting services on your opencart shop, and thes
 
 - using **custom themes**
 	- *burro* uses *vqmod* to also modify some files in custom themes you may have installed. 
-	- *vqmod* is used keeping in mind to search the more obvious and important html elements in the page as anchor points for code replacement. that should grant maximum compatibility with custom themes.
-	- however could happen that *search strings* matched by *vqmod* are not found in custom theme you are using. if this is the case, then manually execute on your theme the modifications stated in the section *DEFAULT THEME* of file *vqmod/xml/burro.xml*, choosing different *search strings* when they are not matched.
+	- *vqmod* is used keeping in mind to search the more obvious and important code elements in the page as anchor points for code replacement. that should grant maximum compatibility with custom themes.
+	- however could happen that *search strings* matched by *vqmod* are not found in custom theme you are using. if this is the case, then manually execute on your theme the operations stated in *vqmod/xml/* files, choosing different *search strings* when they are not matched.
 
 ---
 

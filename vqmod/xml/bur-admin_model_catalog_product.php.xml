@@ -1,0 +1,63 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################  PRODUCT MODEL  ####################################################################### -->
+	<!-- ############################################################################################################################# -->
+	<!-- add Burro to product model -->
+	<file name="admin/model/catalog/product.php">
+		<!-- insert of new product -->
+		<!-- note: this replace should take place 2 times in this file	-->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[if (isset($data['product_special'])) {]]></search>
+			<add><![CDATA[if (isset($data['product_hosting'])) {
+			foreach ($data['product_hosting'] as $product_hosting) {
+				$this->db->query("INSERT INTO " . DB_PREFIX . "product_hosting SET product_id = '" . (int)$product_id . "', service = '" . $product_hosting['service'] . "', duration = '" . (int)$product_hosting['duration'] . "', size = '" . (int)$product_hosting['size'] . "', extensions = '" . $product_hosting['extensions'] . "', quantity = '" . $product_hosting['quantity'] . "'" );
+			}
+		}
+		if (isset($data['product_special'])) {]]></add>
+		</operation>
+		
+		<!-- delete of a product -->
+		<!-- note: this replace should take place 2 times in this file	-->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");]]></search>
+			<add><![CDATA[$this->db->query("DELETE FROM " . DB_PREFIX . "product_hosting WHERE product_id = '" . (int)$product_id . "'");
+		$this->db->query("DELETE FROM " . DB_PREFIX . "product_special WHERE product_id = '" . (int)$product_id . "'");]]></add>
+		</operation>
+		
+		<!-- copy of a product -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$data = array_merge($data, array('product_special' => $this->getProductSpecials($product_id)));]]></search>
+			<add><![CDATA[$data = array_merge($data, array('product_hosting' => $this->getProductHostings($product_id)));
+			$data = array_merge($data, array('product_special' => $this->getProductSpecials($product_id)));]]></add>
+		</operation>
+		
+		<!-- get a product -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[public function getProductSpecials($product_id) {]]></search>
+			<add><![CDATA[public function getProductHostings($product_id) {
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_hosting WHERE product_id = '" . (int)$product_id . "' ORDER BY product_hosting_id");
+		return $query->rows;
+	}
+	public function getProductSpecials($product_id) {]]></add>
+		</operation>
+	</file>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</modification>	
+	

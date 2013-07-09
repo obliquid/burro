@@ -1,0 +1,64 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################  DEFAULT THEME  ####################################################################### -->
+	<!-- ############################################################################################################################# -->
+	<!-- add Burro javascript to catalog header tpl -->
+	<file name="catalog/view/theme/*/template/common/header.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[</head>]]></search>
+			<add><![CDATA[<script type="text/javascript" src="catalog/view/javascript/burro.js"></script>
+</head>]]></add>
+		</operation>
+	</file>
+
+	<!-- add hostings visualization in cart tpl and in module cart tpl (the mini cart in header) -->
+	<file name="catalog/view/theme/*/template/checkout/cart.tpl,catalog/view/theme/*/template/module/cart.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php foreach ($product['option'] as $option) { ?>]]></search>
+			<add><![CDATA[
+                <?php foreach ($product['hostings'] as $hosting) { ?>
+                <?php 		if ( isset($hosting['hosting_domain_selected']) && $hosting['hosting_domain_selected'] != "" ) { ?>
+                - <small>domain: <strong><?php echo $hosting['hosting_domain_selected']; ?></strong></small><br />
+                <?php 		} ?>
+                <?php 		if ( isset($hosting['hosting_mailbox_selected']) && $hosting['hosting_mailbox_selected'] != "" ) { ?>
+                - <small>mailbox: <strong><?php echo $hosting['hosting_mailbox_selected']; ?></strong></small><br />
+                <?php 		} ?>
+                <?php 		if ( isset($hosting['hosting_duration']) && $hosting['hosting_duration'] > 0 ) { ?>
+                - <small>duration: <strong><?php echo $hosting['hosting_duration']; ?> months</strong></small><br />
+                <?php 		} ?>
+                <?php 		if ( isset($hosting['hosting_size']) && $hosting['hosting_size'] > 0 ) { ?>
+                - <small>size: <strong><?php echo $hosting['hosting_size']; ?> GBytes</strong></small><br />
+                <?php 		} ?>
+                <?php 		if ( isset($hosting['hosting_quantity']) && $hosting['hosting_quantity'] > 0 ) { ?>
+                - <small>quantity: <strong><?php echo $hosting['hosting_quantity']; ?></strong></small><br />
+                <?php 		} ?>
+                <?php } ?>                
+                <?php foreach ($product['option'] as $option) { ?>]]></add>
+		</operation>
+	</file>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+</modification>	
+
+

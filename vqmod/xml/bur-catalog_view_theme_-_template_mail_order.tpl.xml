@@ -1,0 +1,46 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+	<!-- customize mail sent to customers on each order-->
+	<file name="catalog/view/theme/*/template/mail/order.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php foreach ($product['option'] as $option) { ?>]]></search>
+			<add><![CDATA[<?php foreach ($product['hostings'] as $hosting) { ?>
+          <br />
+          &nbsp;<small> - <?php 
+		  echo $hosting['service'].':';
+		  if ( (int)$hosting['quantity'] > 0 ) echo ' qty: '.$hosting['quantity'];
+		  if ( (int)$hosting['size'] > 0 ) echo ' '.$hosting['size'].'GB';
+		  if ( (int)$hosting['duration'] > 0 ) echo ' '.$hosting['duration'].'Months';
+		  if ( $hosting['domain'] != '' ) echo ' '.$hosting['domain'];
+		  if ( $hosting['hosting_email'] != '' ) echo ' '.$hosting['hosting_email'];
+		  
+		  ?></small>
+          <?php } ?>
+          <?php foreach ($product['option'] as $option) { ?>]]></add>
+		</operation>
+	</file>
+ 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+</modification>	
+
+

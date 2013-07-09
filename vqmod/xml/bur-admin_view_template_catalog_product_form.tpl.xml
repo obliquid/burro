@@ -1,0 +1,95 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################  PRODUCT VIEW   ####################################################################### -->
+	<!-- ############################################################################################################################# -->
+	<!-- add Burro view to admin product template -->
+	<file name="admin/view/template/catalog/product_form.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a>]]></search>
+			<add><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a><a href="#tab-hosting">Hostings</a>]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<div id="tab-design">]]></search>
+			<add><![CDATA[<div id="tab-hosting">
+          <table id="hosting" class="list">
+            <thead>
+              <tr>
+                <td class="left">Service:</td>
+                <td class="right">Duration (months):<br/><span class="help">Mandatory for all services.</span></td>
+                <td class="right">Size (GBytes):<br/><span class="help">Used only for services "Web Hosting", "Web Hosting Additional Space", "Web Hosting Additional Traffic" and "Mailbox Additional Space".</span></td>
+                <td class="right">Allowed domain extensions:<br/><span class="help">Used only for service "Domain Name".<br/>Multiple allowed, comma separated<br/>Ex.: it,com,net,org,info</span></td>
+                <td class="right">Quantity:<br/><span class="help">Used only for service "Mailbox".</span></td>
+                <td></td>
+              </tr>
+            </thead>
+            <?php $hosting_row = 0; ?>
+            <?php foreach ($product_hostings as $product_hosting) { ?>
+            <tbody id="hosting-row<?php echo $hosting_row; ?>">
+              <tr>
+                <td class="left"><select name="product_hosting[<?php echo $hosting_row; ?>][service]">
+                    <option value="domain" <?php if ( $product_hosting['service'] == 'domain' ) echo ' selected="selected" '; ?> >Domain Name</option>
+                    <option value="webhosting" <?php if ( $product_hosting['service'] == 'webhosting' ) echo ' selected="selected" '; ?> >Web Hosting</option>
+                    <option value="webhosting_space" <?php if ( $product_hosting['service'] == 'webhosting_space' ) echo ' selected="selected" '; ?> >Web Hosting Additional Space</option>
+                    <option value="webhosting_traffic" <?php if ( $product_hosting['service'] == 'webhosting_traffic' ) echo ' selected="selected" '; ?> >Web Hosting Additional Traffic</option>
+                    <option value="mailbox" <?php if ( $product_hosting['service'] == 'mailbox' ) echo ' selected="selected" '; ?> >Mailbox</option>
+                    <option value="mailbox_space" <?php if ( $product_hosting['service'] == 'mailbox_space' ) echo ' selected="selected" '; ?> >Mailbox Additional Space</option>
+                    <option value="database" <?php if ( $product_hosting['service'] == 'database' ) echo ' selected="selected" '; ?> >Database</option>
+                  </select></td>
+                <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][duration]" value="<?php echo $product_hosting['duration']; ?>" size="2" /></td>
+                <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][size]" value="<?php echo $product_hosting['size']; ?>" size="2" /></td>
+                <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][extensions]" value="<?php echo $product_hosting['extensions']; ?>" /></td>
+                <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][quantity]" value="<?php echo $product_hosting['quantity']; ?>" size="2" /></td>
+                <td class="left"><a onclick="$('#hosting-row<?php echo $hosting_row; ?>').remove();" class="button"><?php echo $button_remove; ?></a></td>
+              </tr>
+            </tbody>
+            <?php $hosting_row++; ?>
+            <?php } ?>
+            <tfoot>
+              <tr>
+                <td colspan="5"></td>
+                <td class="left"><a onclick="addHosting();" class="button"><?php echo $button_add_hosting; ?></a></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <div id="tab-design">]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[var special_row = <?php echo $special_row; ?>;]]></search>
+			<add><![CDATA[var hosting_row = <?php echo $hosting_row; ?>;
+function addHosting() {
+	html  = '<tbody id="hosting-row' + hosting_row + '">';
+	html += '  <tr>'; 
+    html += '    <td class="left"><select name="product_hosting[' + hosting_row + '][service]">';
+    html += '      <option value="domain">Domain Name</option>';
+    html += '      <option value="webhosting">Web Hosting</option>';
+    html += '      <option value="webhosting_space">Web Hosting Additional Space</option>';
+    html += '      <option value="webhosting_traffic">Web Hosting Additional Traffic</option>';
+    html += '      <option value="mailbox">Mailbox</option>';
+    html += '      <option value="mailbox_space">Mailbox Additional Space</option>';
+    html += '      <option value="database">Database</option>';
+    html += '    </select></td>';		
+    html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][duration]" value="" size="4" /></td>';
+	html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][size]" value="" size="4" /></td>';
+    html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][extensions]" value=""  size="16" /></td>';
+    html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][quantity]" value=""  size="4" /></td>';
+	html += '    <td class="left"><a onclick="$(\'#hosting-row' + hosting_row + '\').remove();" class="button"><?php echo $button_remove; ?></a></td>';
+	html += '  </tr>';
+    html += '</tbody>';
+	$('#hosting tfoot').before(html);
+	hosting_row++;
+}
+var special_row = <?php echo $special_row; ?>;]]></add>
+		</operation>
+	</file>
+
+
+
+
+</modification>	

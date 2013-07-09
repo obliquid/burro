@@ -1,0 +1,48 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+	<!-- add hosting data to all emails sent on order confirmation -->
+	<file name="catalog/model/checkout/order.php">
+		<!-- modify html customer email -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$template->data['products'][] = array(]]></search>
+			<add><![CDATA[
+				
+				//check for hosting services for this product
+				$this->load->model('burro/hosting');
+				$hostings = $this->model_burro_hosting->getHostings(array(),array(),(int)$product['order_id'],0,(int)$product['product_id']);
+			
+				$template->data['products'][] = array(
+					'hostings'     => $hostings,
+			]]></add>
+		</operation>
+		<!-- modify text customer email -->
+		<!-- modify text admin email -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$order_option_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_option WHERE order_id = '" . (int)$order_id . "' AND order_product_id = '" . $product['order_product_id'] . "'");]]></search>
+			<add><![CDATA[
+				//check for hosting services for this product
+				$this->load->model('burro/hosting');
+				$hostings = $this->model_burro_hosting->getHostings(array(),array(),(int)$product['order_id'],0,(int)$product['product_id']);
+				foreach ($hostings as $hosting) {
+					$text .= chr(9) . '-' . $hosting['service'] . ' ';
+					if ( (int)$hosting['quantity'] > 0 ) $text .=   ' qty: '.$hosting['quantity'];
+					if ( (int)$hosting['size'] > 0 ) $text .=  ' '.$hosting['size'].'GB';
+					if ( (int)$hosting['duration'] > 0 ) $text .=  ' '.$hosting['duration'].'Months';
+					if ( $hosting['domain'] != '' ) $text .=  ' '.$hosting['domain'];
+					if ( $hosting['hosting_email'] != '' ) $text .=  ' '.$hosting['hosting_email'];
+					$text .= "\n";
+				}
+			
+			$order_option_query = $this->db->query("SELECT * FROM " . DB_PREFIX . "order_option WHERE order_id = '" . (int)$order_id . "' AND order_product_id = '" . $product['order_product_id'] . "'");]]></add>
+		</operation>
+	</file>
+
+
+
+</modification>	
+

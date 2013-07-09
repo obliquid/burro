@@ -1,0 +1,28 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+
+	<!-- just before a cart is confirmed from the customer, it is saved to db (till now cart was only stored in sessions) -->
+	<!-- so when save cart to db, must also save hostings -->
+	<file name="catalog/controller/account/order.php">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->data['products'][] = array(]]></search>
+			<add><![CDATA[
+				
+				//check for hosting services for this product
+				$this->load->model('burro/hosting');
+				$hostings = $this->model_burro_hosting->getHostings(array(),array(),(int)$product['order_id'],0,(int)$product['product_id']);
+			
+				$this->data['products'][] = array(
+					'hostings'     => $hostings,
+			]]></add>
+		</operation>
+	</file>
+
+
+
+</modification>	

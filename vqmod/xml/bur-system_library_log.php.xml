@@ -1,0 +1,30 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################  LIBRARY  ############################################################################# -->
+	<!-- ############################################################################################################################# -->
+	<!-- add logVar to log -->
+	<file name="system/library/log.php">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[public function write($message) {]]></search>
+			<add><![CDATA[public function writeVar($var) {
+		ob_start();
+		var_dump($var);
+		$message = ob_get_contents();
+		ob_end_clean();
+		$file = DIR_LOGS . $this->filename;
+		$handle = fopen($file, 'a+'); 
+		fwrite($handle, date('Y-m-d G:i:s') . ' - ' . $message . "\n");
+		fclose($handle); 
+
+	}
+			
+	public function write($message) {]]></add>
+		</operation>
+	</file>
+</modification>

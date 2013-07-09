@@ -1,0 +1,1611 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	
+	
+	
+	<!-- add Hosting section in product tpl -->
+	<file name="catalog/view/theme/*/template/product/product.tpl">
+	
+		<!-- first add specific form input for hostings -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<div class="cart">]]></search>
+			<add><![CDATA[
+      <?php if (count($product_hostings)>0) { ?>
+      <script>
+		$(document).ready(function() {
+			$('input[name="quantity"]').prop('disabled', true);
+		});
+
+      </script>
+      <div class="price hosting_section">
+	  <input type="hidden" name="is_hosting" value="yes"/>
+        <table cellpadding="3">
+      <?php 	foreach ( $product_hostings as $hosting ) { ?>
+          <tr>
+      <?php 		if ( isset( $hosting['service'] ) && $hosting['service']=="domain" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Domain:&nbsp;&nbsp;&nbsp;&nbsp;www.</h3></td>
+      <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="webhosting" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Web Hosting</h3></td>
+      <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="webhosting_space" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Web Hosting Additional Space</h3></td>
+      <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="mailbox" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Mailboxes</h3></td>
+      <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="mailbox_space" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Mailbox Additional Space</h3></td>
+      <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="database" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Database</h3></td>
+      <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="webhosting_traffic" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Web Hosting Additional Traffic</h3></td>
+      <?php 		} ?>
+	  
+      <?php 		if ( isset( $hosting['service'] ) && $hosting['service']=="domain" ) { ?>
+              <script>
+			  
+			function checkIt() {
+				
+				//init some vars
+				$('input[name="hosting_domain"]').val( sanitizeDomain( $('input[name="hosting_domain"]').val(), true) );
+				var domainRaw = $('input[name="hosting_domain"]').val();
+				var domainExt = $('select[name="hosting_domain_extension"]').val();
+				
+				if (domainRaw != '' && domainRaw.length > 2) {
+					resetDom(true);
+					$('#busy-domainCheck').show();
+					$('#button-cart').prop('disabled', true);
+					$('input[name="hosting_domain"]').prop('disabled', true);
+					$('select[name="hosting_domain_extension"]').prop('disabled', true);
+				
+					//ajax call
+					$.ajax({
+						url: 'index.php?route=burro/hosting/domainAvail',
+						type: 'post',
+						data: { 
+							'domain' : domainRaw,
+							'domain_extension' : domainExt 
+						},
+						dataType: 'json',
+						success: function(json) {
+							$('#busy-domainCheck').hide();
+							$('input[name="hosting_domain"]').prop('disabled', false);
+							$('select[name="hosting_domain_extension"]').prop('disabled', false);
+							
+							
+							var mainFullDomain = domainRaw+'.'+domainExt;
+							whoisResult = json[1];
+							if (json[0] ) {
+								//alert("libero!: \n\n"+json[1]);
+								$('#hosting_domain_available').show();
+								$('#hosting_domain_unavailable').hide();
+								//$('#button-cart').prop('disabled', false); //not yet enabled, first user must compile registrant form
+								//$('#button-cart').val('Choose Registrant');
+								$('#registrant_box').fadeIn();
+								validateRegistrant();
+							} else {
+								//alert("occupato!: \n\n"+json[1]);
+								$('#hosting_domain_available').hide();
+								$('#hosting_domain_unavailable').show();
+								$('#button-cart').prop('disabled', true);
+							}
+						},
+						error: function(json) {
+							console.log("product.tpl -> checkIt(): error calling index.php?route=burro/hosting/domainAvail");
+							console.log(json);
+							$('#busy-domainCheck').hide();
+							alert("product.tpl -> checkIt(): error calling index.php?route=burro/hosting/domainAvail");
+						}
+					});				
+			
+				}					
+			}					
+			
+			function resetDom(forAjax) {
+				$('#hosting_domain_available').hide();
+				$('#hosting_domain_unavailable').hide();
+				$('#busy-domainCheck').hide();
+				$('#hosting_domain_error').show();
+				$('#button-cart').val('Check Availability');
+				$('#registrant_box').hide();
+				if ( forAjax ) {
+					$('#hosting_domain_error').hide();
+				}
+			}
+			
+			function validateRegistrant() {
+				console.log("ti valido!");
+				$('#registrant_validated').hide();
+				$('#registrant_unvalidated').hide();
+				$('.required').remove();
+				
+				var isValid = true;
+				
+				//do all checks for Company registrant
+				if ($("input[name='registrant_type']:checked").val() == 'company') {
+					//first check for valid email addresses
+					if ( !validateEmail( $('input[name="registrant_company_email"]').val() ) ) {
+						$('input[name="registrant_company_email"]').before("<span class='required'>*&nbsp;</span>");
+						isValid = false;
+					}
+					//then check if all required fields are present
+					$(".registrant_company_field").each(function() {
+						if($(this).val() === "") {
+							$(this).before("<span class='required'>*&nbsp;</span>");
+							isValid = false;
+						}
+					});
+				//do all checks for Person registrant
+				} else if ($("input[name='registrant_type']:checked").val() == 'person') {
+					//first check for valid email addresses
+					if ( !validateEmail( $('input[name="registrant_person_email"]').val() ) ) {
+						$('input[name="registrant_person_email"]').before("<span class='required'>*&nbsp;</span>");
+						isValid = false;
+					}
+					//then check if all required fields are present
+					$(".registrant_person_field").each(function() {
+						if($(this).val() === "") {
+							$(this).before("<span class='required'>*&nbsp;</span>");
+							isValid = false;
+						}
+					});
+				} else {
+					isValid = false;
+				}
+				
+				
+				//finaly act!
+				if ( isValid ) {
+					$('#registrant_validated').show();
+					$('#registrant_unvalidated').hide();
+					$('#button-cart').val('Add to Cart');
+					$('#button-cart').prop('disabled', false);
+				} else {
+					$('#registrant_validated').hide();
+					$('#registrant_unvalidated').show();
+					$('#button-cart').val('Choose Registrant');
+					$('#button-cart').prop('disabled', true);
+				}
+			}
+				
+			$(document).ready(function() {
+				//add domain form behaviours
+				$('input[name="hosting_domain"]').keyup(function(event) {
+					//since domain has changed, resetDom
+					resetDom(true);
+					//first sanitize
+					var sanitizedDomain = sanitizeDomain( $('input[name="hosting_domain"]').val() );
+					if ( sanitizedDomain != $('input[name="hosting_domain"]').val() ) $('input[name="hosting_domain"]').val( sanitizedDomain );
+					if ( $('input[name="hosting_domain"]').val().length < 3 ) {
+						$('#hosting_domain_error').show();
+						$('#hosting_domain_available').hide();
+						$('#hosting_domain_unavailable').hide();
+						$('#button-cart').prop('disabled', true);
+					} else {
+						$('#button-cart').prop('disabled', false);
+						$('#hosting_domain_error').hide();
+					}
+					//then activate check on enter
+					if ( event.which == 13 && $('input[name="hosting_domain"]').val().length > 2 ) {
+						event.preventDefault();
+						checkIt();
+					}
+				});
+				$('input[name="hosting_domain"]').change(function(event) {
+					checkIt();
+				});
+				$('select[name="hosting_domain_extension"]').change(function(event) {
+					checkIt();
+				});
+				$("input[name='registrant_type']").change(function() {
+					if ($("input[name='registrant_type']:checked").val() == 'company') {
+						$("#registrant_box_company").show();
+						$("#registrant_box_person").hide();
+					} else if ($("input[name='registrant_type']:checked").val() == 'person') {
+						$("#registrant_box_company").hide();
+						$("#registrant_box_person").show();
+					}
+					validateRegistrant();
+				});
+				
+				//add registrant form behaviours
+				$(".registrant_company_field").change( validateRegistrant );
+				$(".registrant_person_field").change( validateRegistrant );
+				$("select[name='registrant_company_nation']").change( function() {
+					if ( $("select[name='registrant_company_nation']").val() != "IT" ) {
+						$("select[name='registrant_company_province'] option[value='--']").attr("selected", "selected");
+						$("select[name='registrant_company_province']").prop('disabled', true);
+					} else {
+						$("select[name='registrant_company_province'] option[value='']").attr("selected", "selected");
+						$("select[name='registrant_company_province']").prop('disabled', false);
+					}
+				});
+				$("select[name='registrant_company_repr_birthnation']").change( function() {
+					if ( $("select[name='registrant_company_repr_birthnation']").val() != "IT" ) {
+						$("select[name='registrant_company_repr_birthprovince'] option[value='--']").attr("selected", "selected");
+						$("select[name='registrant_company_repr_birthprovince']").prop('disabled', true);
+					} else {
+						$("select[name='registrant_company_repr_birthprovince'] option[value='']").attr("selected", "selected");
+						$("select[name='registrant_company_repr_birthprovince']").prop('disabled', false);
+					}
+				});
+				$("select[name='registrant_person_birthnation']").change( function() {
+					if ( $("select[name='registrant_person_birthnation']").val() != "IT" ) {
+						$("select[name='registrant_person_birthprovince'] option[value='--']").attr("selected", "selected");
+						$("select[name='registrant_person_birthprovince']").prop('disabled', true);
+					} else {
+						$("select[name='registrant_person_birthprovince'] option[value='']").attr("selected", "selected");
+						$("select[name='registrant_person_birthprovince']").prop('disabled', false);
+					}
+				});
+				$("select[name='registrant_person_nation']").change( function() {
+					if ( $("select[name='registrant_person_nation']").val() != "IT" ) {
+						$("select[name='registrant_person_province'] option[value='--']").attr("selected", "selected");
+						$("select[name='registrant_person_province']").prop('disabled', true);
+					} else {
+						$("select[name='registrant_person_province'] option[value='']").attr("selected", "selected");
+						$("select[name='registrant_person_province']").prop('disabled', false);
+					}
+				});
+				/*
+				registrant_ragsoc
+				registrant_vat
+				registrant_type
+				registrant_address
+				registrant_city
+				registrant_zip
+				registrant_nation
+				registrant_province
+				registrant_phone
+				registrant_email
+				registrant_repr_name
+				registrant_repr_surname
+				registrant_repr_cf
+				registrant_repr_birthdate
+				registrant_repr_birthplace
+				registrant_repr_birthnation
+				registrant_repr_birthprovince
+				*/
+				
+				//kickstart the form
+				resetDom();
+ 
+				//if domain is precompiled, must call checkIt on it
+				if ( $('input[name="hosting_domain"]').val() != '' ) checkIt();
+				
+			});
+              </script>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
+              <input type="text" name="hosting_domain" value="<?php if ( isset( $this->request->get['preselected_domain'] ) ) echo $this->request->get['preselected_domain']; ?>" size="42" />
+              <span class="hosting-error" id="hosting_domain_error" style="display:none;">Domain must be at least 3 chars long</span>
+              <img src="catalog/view/theme/default/image/busy.svg" id="busy-domainCheck" style="display:none;position:relative;top:5px;width:20px;height:20px;"/>
+              <div class="successDomain" id="hosting_domain_available" style="display:none;">Domain available</div>
+              <div class="warningDomain" id="hosting_domain_unavailable"  style="display:none;">Domain already registered</div>
+              <span class='help' style='width: 230px;'>type the domain name you would like to register, and hit <code>enter</code> to check if it's available</span>
+            </td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
+              <br/>&nbsp;.&nbsp;
+            </td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
+              <select name="hosting_domain_extension">
+      <?php 				foreach ( explode(",",$hosting["extensions"]) as $extension ) { ?>
+                <option value="<?php echo $extension; ?>"  <?php if ( isset( $this->request->get['preselected_extension'] ) && $this->request->get['preselected_extension'] == $extension ) { ?> selected="selected"  <?php } ?> ><?php echo $extension; ?></option>
+      <?php 				} ?>
+              </select>
+            </td>
+      <?php 		} elseif ( ( $hosting['service']=="webhosting" || $hosting['service']=="webhosting_space" || $hosting['service']=="webhosting_traffic" ) && !$product_hostings_have_domain ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
+      <?php 			if ( count( $avail_domains ) > 0 ) {  ?>
+              <select name="hosting_domain_selected">
+      <?php 				foreach ( $avail_domains as $avail_domain ) { ?>
+                <option value="<?php echo $avail_domain["domain"]; ?>"><?php echo $avail_domain["domain"]; ?></option>
+      <?php 				} ?>
+              </select>
+              <span class='help'>choose the domain to apply this service</span>
+      <?php 			} else {  ?>
+              <span class="hosting-error">first you must add to cart a domain, then you'll be able to add services to that domain.</span>	  
+      <?php 			}  ?>
+            </td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+      <?php 		} elseif ( $hosting['service']=="mailbox_space" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
+      <?php 			if ( count( $avail_mailboxes ) > 0 ) {  ?>
+              <select name="hosting_mailbox_selected">
+      <?php 				foreach ( $avail_mailboxes as $avail_mailbox ) { ?>
+                <option value="<?php echo $avail_mailbox["email"]; ?>"><?php echo $avail_mailbox["email"]; ?></option>
+      <?php 				} ?>
+              </select>
+              <span class='help'>choose the mailbox to apply this service</span>
+      <?php 			} else {  ?>
+              <span class="hosting-error">you must be logged in, and already have bought a mailbox, then you'll be able to add more space to it.</span>	  
+      <?php 			}  ?>
+            </td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+      <?php 		} else { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+      <?php 		} ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;<?php 	if ( (int)$hosting['size'] > 0 ) {  ?>background-color: #f7f7f7; <?php 	}  ?>">
+             <?php 	if ( (int)$hosting['size'] > 0 ) {  ?>
+              <h3 style='margin:0px;'><?php echo $hosting['size']; ?></h3><h5 style='margin:0px;line-height: 10px;'>GBytes&nbsp;&nbsp;</h5><input type="hidden" name="hosting_size" value="<?php echo $hosting['size']; ?>"/>
+             <?php 	}  ?>
+            </td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;<?php 	if ( (int)$hosting['quantity'] > 0 ) {  ?>background-color: #f7f7f7; <?php 	}  ?>">
+             <?php 	if ( (int)$hosting['quantity'] > 0 ) {  ?>
+              <h3 style='margin:0px;'><?php echo $hosting['quantity']; ?></h3><h5 style='margin:0px;line-height: 10px;'>qty&nbsp;&nbsp;</h5><input type="hidden" name="hosting_quantity" value="<?php echo $hosting['quantity']; ?>"/>
+             <?php 	}  ?>
+            </td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;background-color: #f7f7f7;"><h3 style='margin:0px;'><?php echo $hosting['duration']; ?></h3><h5 style='margin:0px;line-height: 10px;'>months&nbsp;&nbsp;</h5><input type="hidden" name="hosting_duration" value="<?php echo $hosting['duration']; ?>"/></td>
+          </tr>
+      <?php 		if ( isset( $hosting['service'] ) && $hosting['service']=="domain" ) { ?>
+          <tr id="registrant_box" style="display:none;">
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Registrant:</h3></td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;" colspan="6">
+			<table>
+				<tr>
+					<td valign="top"  style="">
+						<input type="radio" name="registrant_type" value="company" />Company
+					</td>
+					<td valign="top"  style="">
+						<input type="radio" name="registrant_type" value="person" />Person
+					</td>
+				</tr>
+			</table>
+			<table id="registrant_box_company" style="display:none;">
+				<tr><td>&nbsp;</td></tr>
+				<tr>
+					<td  colspan="2" style="border-top: 1px solid #E7E7E7;"><h3>Company:</h3></td>
+				</tr>
+				<tr >
+					<td style="width:150px;">Company Name</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_ragsoc" type="text" /></td>
+				</tr>
+				<tr >
+					<td >VAT ID (P.IVA)</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_vat" type="text" ></td>
+				</tr>
+				<tr >
+					<td >Type</td>
+					<td>
+						<select style="width:230px;"  class="registrant_company_field" name="registrant_company_type" >
+							<option value=""></option>
+							<option value="comapny">Company</option>
+							<option value="professional">Professional</option>
+							<option value="noprofit_org">Italian No-profit Organization</option>
+							<option value="public_org">Italian Public Organization</option>
+							<option value="other">Other</option>
+							<option value="foreign_company">Foreign (non Italian) Company</option>
+						</select>
+					</td>
+				</tr>
+				<tr >
+					<td >Address</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_address" type="text" /></td>
+				</tr>
+				<tr >
+					<td >City</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_city" type="text" /></td>
+				</tr>
+				<tr >
+					<td >ZIP code (CAP)</td>
+					<td><input class="registrant_company_field" name="registrant_company_zip" type="text" maxlength="7" /></td>
+				</tr>
+				<tr >
+					<td >Nation</td>
+					<td>
+						<select style="width:230px;"  class="registrant_company_field" name="registrant_company_nation">
+							<option value=""></option>
+							<option value="AT">Austria</option>
+							<option value="BE">Belgio</option>
+							<option value="BG">Bulgaria</option>
+							<option value="CY">Cipro</option>
+							<option value="DK">Danimarca</option>
+							<option value="EE">Estonia</option>
+							<option value="FI">Finlandia</option>
+							<option value="FR">Francia</option>
+							<option value="DE">Germania</option>
+							<option value="GB">Gran bretagna</option>
+							<option value="GR">Grecia</option>
+							<option value="IE">Irlanda</option>
+							<option value="IT">Italia</option>
+							<option value="LV">Lettonia</option>
+							<option value="LT">Lituania</option>
+							<option value="LU">Lussemburgo</option>
+							<option value="MT">Malta</option>
+							<option value="NL">Paesi Bassi</option>
+							<option value="PL">Polonia</option>
+							<option value="PT">Portogallo</option>
+							<option value="CZ">Repubblica Ceca</option>
+							<option value="RO">Romania</option>
+							<option value="SK">Slovacchia</option>
+							<option value="SI">Slovenia</option>
+							<option value="ES">Spagna</option>
+							<option value="SE">Svezia</option>
+							<option value="HU">Ungheria</option>
+						</select>
+					</td>
+				</tr>
+				<tr >
+					<td >Province</td>
+					<td>
+						<select style="width:230px;"  class="registrant_company_field" name="registrant_company_province" >
+							<option value=""></option>
+							<option value="--">Not in Italy</option>
+							<option value="ag">Agrigento</option>
+							<option value="al">Alessandria</option>
+							<option value="an">Ancona</option>
+							<option value="ao">Aosta</option>
+							<option value="ar">Arezzo</option>
+							<option value="ap">Ascoli Piceno</option>
+							<option value="at">Asti</option>
+							<option value="av">Avellino</option>
+							<option value="ba">Bari</option>
+							<option value="bt">Barletta Andria Trani</option>
+							<option value="bl">Belluno</option>
+							<option value="bn">Benevento</option>
+							<option value="bg">Bergamo</option>
+							<option value="bi">Biella</option>
+							<option value="bo">Bologna</option>
+							<option value="bz">Bolzano</option>
+							<option value="bs">Brescia</option>
+							<option value="br">Brindisi</option>
+							<option value="ca">Cagliari</option>
+							<option value="cl">Caltanissetta</option>
+							<option value="cb">Campobasso</option>
+							<option value="ci">Carbonia Inglesias</option>
+							<option value="ce">Caserta</option>
+							<option value="ct">Catania</option>
+							<option value="cz">Catanzaro</option>
+							<option value="ch">Chieti</option>
+							<option value="co">Como</option>
+							<option value="cs">Cosenza</option>
+							<option value="cr">Cremona</option>
+							<option value="kr">Crotone</option>
+							<option value="cn">Cuneo</option>
+							<option value="en">Enna</option>
+							<option value="fm">Fermo</option>
+							<option value="fe">Ferrara</option>
+							<option value="fi">Firenze</option>
+							<option value="fg">Foggia</option>
+							<option value="fc">Forli' e Cesena</option>
+							<option value="fr">Frosinone</option>
+							<option value="ge">Genova</option>
+							<option value="go">Gorizia</option>
+							<option value="gr">Grosseto</option>
+							<option value="im">Imperia</option>
+							<option value="is">Isernia</option>
+							<option value="aq">L'Aquila</option>
+							<option value="sp">La Spezia</option>
+							<option value="lt">Latina</option>
+							<option value="le">Lecce</option>
+							<option value="lc">Lecco</option>
+							<option value="li">Livorno</option>
+							<option value="lo">Lodi</option>
+							<option value="lu">Lucca</option>
+							<option value="mc">Macerata</option>
+							<option value="mn">Mantova</option>
+							<option value="ms">Massa Carrara</option>
+							<option value="mt">Matera</option>
+							<option value="vs">Medio Campidano</option>
+							<option value="me">Messina</option>
+							<option value="mi">Milano</option>
+							<option value="mo">Modena</option>
+							<option value="mb">Monza Brianza</option>
+							<option value="na">Napoli</option>
+							<option value="no">Novara</option>
+							<option value="nu">Nuoro</option>
+							<option value="og">Ogliastra</option>
+							<option value="ot">Olbia Tempio</option>
+							<option value="or">Oristano</option>
+							<option value="pd">Padova</option>
+							<option value="pa">Palermo</option>
+							<option value="pr">Parma</option>
+							<option value="pv">Pavia</option>
+							<option value="pg">Perugia</option>
+							<option value="pu">Pesaro e Urbino</option>
+							<option value="pe">Pescara</option>
+							<option value="pc">Piacenza</option>
+							<option value="pi">Pisa</option>
+							<option value="pt">Pistoia</option>
+							<option value="pn">Pordenone</option>
+							<option value="pz">Potenza</option>
+							<option value="po">Prato</option>
+							<option value="rg">Ragusa</option>
+							<option value="ra">Ravenna</option>
+							<option value="rc">Reggio Calabria</option>
+							<option value="re">Reggio Emilia</option>
+							<option value="ri">Rieti</option>
+							<option value="rn">Rimini</option>
+							<option value="rm">Roma</option>
+							<option value="ro">Rovigo</option>
+							<option value="sa">Salerno</option>
+							<option value="ss">Sassari</option>
+							<option value="sv">Savona</option>
+							<option value="si">Siena</option>
+							<option value="sr">Siracusa</option>
+							<option value="so">Sondrio</option>
+							<option value="ta">Taranto</option>
+							<option value="te">Teramo</option>
+							<option value="tr">Terni</option>
+							<option value="to">Torino</option>
+							<option value="tp">Trapani</option>
+							<option value="tn">Trento</option>
+							<option value="tv">Treviso</option>
+							<option value="ts">Trieste</option>
+							<option value="ud">Udine</option>
+							<option value="va">Varese</option>
+							<option value="ve">Venezia</option>
+							<option value="vb">Verbano</option>
+							<option value="vc">Vercelli</option>
+							<option value="vr">Verona</option>
+							<option value="vv">Vibo Valentia</option>
+							<option value="vi">Vicenza</option>
+							<option value="vt">Viterbo</option>
+						</select>
+					</td>
+				</tr>
+				<tr >
+					<td >Phone</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_phone" type="text" /></td>
+				</tr>
+				<tr >
+					<td >E-Mail</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_email" type="text" /></td>
+				</tr>
+				<tr><td>&nbsp;</td></tr>
+				<tr>
+					<td  colspan="2"  style="border-top: 1px solid #E7E7E7;" ><h3>Company Legal Representative (Legale Rappresentante):</h3></td>
+				</tr>
+				<tr >
+					<td >Name</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_repr_name" type="text" ></td>
+				</tr>
+				<tr >
+					<td >Surname</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_repr_surname" type="text" /></td>
+				</tr>
+				<tr >
+					<td >Tax Code (Codice Fiscale)</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_repr_cf" type="text" ></td>
+				</tr>
+				<tr >
+					<td >Date of Birth</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_repr_birthdate" type="text" /></td>
+				</tr>
+				<tr >
+					<td >Birth Place</td>
+					<td><input style="width:230px;"  class="registrant_company_field" name="registrant_company_repr_birthplace" type="text" /></td>
+				</tr>
+				<tr >
+					<td >Birth Nation</td>
+					<td>
+						<select style="width:230px;"  class="registrant_company_field" name="registrant_company_repr_birthnation" >
+							<option value=""></option>
+							<option value="AF">Afghanistan</option>
+							<option value="AX">Aland Islands</option>
+							<option value="AL">Albania</option>
+							<option value="DZ">Algeria</option>
+							<option value="AD">Andorra</option>
+							<option value="AO">Angola</option>
+							<option value="AI">Anguilla</option>
+							<option value="AQ">Antartico</option>
+							<option value="AG">Antigua e Barbuda</option>
+							<option value="AN">Antille Olandesi</option>
+							<option value="SA">Arabia Saudita</option>
+							<option value="AR">Argentina</option>
+							<option value="AM">Armenia</option>
+							<option value="AW">Aruba</option>
+							<option value="AU">Australia</option>
+							<option value="AT">Austria</option>
+							<option value="AZ">Azerbaijan</option>
+							<option value="BS">Bahamas</option>
+							<option value="BH">Bahrain</option>
+							<option value="BD">Bangladesh</option>
+							<option value="BB">Barbados</option>
+							<option value="BE">Belgio</option>
+							<option value="BZ">Belize</option>
+							<option value="BJ">Benin</option>
+							<option value="BM">Bermuda</option>
+							<option value="BT">Bhutan</option>
+							<option value="BY">Bielorussia</option>
+							<option value="BO">Bolivia</option>
+							<option value="BA">Bosnia-Erzegovina</option>
+							<option value="BW">Botswana</option>
+							<option value="BV">Bouvet Island</option>
+							<option value="BR">Brasile</option>
+							<option value="BN">Brunei</option>
+							<option value="BG">Bulgaria</option>
+							<option value="BF">Burkina Faso</option>
+							<option value="BI">Burundi</option>
+							<option value="KH">Cambogia</option>
+							<option value="CM">Camerun</option>
+							<option value="CA">Canada</option>
+							<option value="CV">Capo Verde</option>
+							<option value="KY">Cayman Islands</option>
+							<option value="CX">Christmas Island</option>
+							<option value="TD">Ciad</option>
+							<option value="CL">Cile</option>
+							<option value="CN">Cina</option>
+							<option value="CY">Cipro</option>
+							<option value="VA">Città del Vaticano</option>
+							<option value="CC">Cocos Islands</option>
+							<option value="CO">Colombia</option>
+							<option value="KM">Comore</option>
+							<option value="CK">Cook Islands</option>
+							<option value="KP">Corea del Nord</option>
+							<option value="KR">Corea del Sud</option>
+							<option value="CI">Costa d'Avorio</option>
+							<option value="CR">Costa Rica</option>
+							<option value="HR">Croazia</option>
+							<option value="CU">Cuba</option>
+							<option value="DK">Danimarca</option>
+							<option value="DM">Dominica</option>
+							<option value="EC">Ecuador</option>
+							<option value="EG">Egitto</option>
+							<option value="SV">El Salvador</option>
+							<option value="AE">Emirati Arabi Uniti</option>
+							<option value="ER">Eritrea</option>
+							<option value="EE">Estonia</option>
+							<option value="ET">Etiopia</option>
+							<option value="FK">Falkland Islands</option>
+							<option value="FO">Faroe Islands</option>
+							<option value="FJ">Figi</option>
+							<option value="PH">Filippine</option>
+							<option value="FI">Finlandia</option>
+							<option value="FR">Francia</option>
+							<option value="GA">Gabon</option>
+							<option value="GM">Gambia</option>
+							<option value="GE">Georgia</option>
+							<option value="GS">Georgia del Sud e isole Sandwich meridionali</option>
+							<option value="DE">Germania</option>
+							<option value="GH">Ghana</option>
+							<option value="JM">Giamaica</option>
+							<option value="JP">Giappone</option>
+							<option value="GI">Gibilterra</option>
+							<option value="DJ">Gibuti</option>
+							<option value="JO">Giordania</option>
+							<option value="GB">Gran bretagna</option>
+							<option value="GR">Grecia</option>
+							<option value="GD">Grenada</option>
+							<option value="GL">Groenlandia</option>
+							<option value="GP">Guadalupa</option>
+							<option value="GU">Guam</option>
+							<option value="GT">Guatemala</option>
+							<option value="GG">Guernsey</option>
+							<option value="GN">Guinea</option>
+							<option value="GQ">Guinea Equatoriale</option>
+							<option value="GW">Guinea-Bissau</option>
+							<option value="GY">Guyana</option>
+							<option value="GF">Guyana Francese</option>
+							<option value="HT">Haiti</option>
+							<option value="HM">Heard Island e McDonald Islands</option>
+							<option value="HN">Honduras</option>
+							<option value="HK">Hong Kong</option>
+							<option value="IN">India</option>
+							<option value="ID">Indonesia</option>
+							<option value="IR">Iran</option>
+							<option value="IQ">Iraq</option>
+							<option value="IE">Irlanda</option>
+							<option value="IS">Islanda</option>
+							<option value="IM">Isle of Man</option>
+							<option value="IL">Israele</option>
+							<option value="IT">Italia</option>
+							<option value="JE">Jersey</option>
+							<option value="KZ">Kazakistan</option>
+							<option value="KE">Kenya</option>
+							<option value="KG">Kirghizistan</option>
+							<option value="KI">Kiribati</option>
+							<option value="KW">Kuwait</option>
+							<option value="LA">Laos</option>
+							<option value="LS">Lesotho</option>
+							<option value="LV">Lettonia</option>
+							<option value="LB">Libano</option>
+							<option value="LR">Liberia</option>
+							<option value="LY">Libia</option>
+							<option value="LI">Liechtenstein</option>
+							<option value="LT">Lituania</option>
+							<option value="LU">Lussemburgo</option>
+							<option value="MO">Macao</option>
+							<option value="MK">Macedonia</option>
+							<option value="MG">Madagascar</option>
+							<option value="MW">Malawi</option>
+							<option value="MV">Maldive</option>
+							<option value="MY">Malesia</option>
+							<option value="ML">Mali</option>
+							<option value="MT">Malta</option>
+							<option value="MA">Marocco</option>
+							<option value="MH">Marshall Islands</option>
+							<option value="MQ">Martinica</option>
+							<option value="MR">Mauritania</option>
+							<option value="MU">Mauritius</option>
+							<option value="YT">Mayotte</option>
+							<option value="MX">Messico</option>
+							<option value="MD">Moldavia</option>
+							<option value="MC">Monaco</option>
+							<option value="MN">Mongolia</option>
+							<option value="ME">Montenegro</option>
+							<option value="MS">Montserrat</option>
+							<option value="MZ">Mozambico</option>
+							<option value="MM">Myanmar</option>
+							<option value="NA">Namibia</option>
+							<option value="NR">Nauru</option>
+							<option value="NP">Nepal</option>
+							<option value="NI">Nicaragua</option>
+							<option value="NE">Niger</option>
+							<option value="NG">Nigeria</option>
+							<option value="NU">Niue</option>
+							<option value="NF">Norfolk Island</option>
+							<option value="MP">Northern Mariana Islands</option>
+							<option value="NO">Norvegia</option>
+							<option value="NC">Nuova Caledonia</option>
+							<option value="NZ">Nuova Zelanda</option>
+							<option value="OM">Oman</option>
+							<option value="NL">Paesi Bassi</option>
+							<option value="PK">Pakistan</option>
+							<option value="PW">Palau</option>
+							<option value="PA">Panamà</option>
+							<option value="PG">Papua Nuova Guinea</option>
+							<option value="PY">Paraguay</option>
+							<option value="PE">Perù</option>
+							<option value="PN">Pitcairn</option>
+							<option value="PF">Polinesia Francese</option>
+							<option value="PL">Polonia</option>
+							<option value="PR">Porto Rico</option>
+							<option value="PT">Portogallo</option>
+							<option value="QA">Qatar</option>
+							<option value="CZ">Repubblica Ceca</option>
+							<option value="CF">Repubblica Centrafricana</option>
+							<option value="CG">Repubblica del Congo</option>
+							<option value="CD">Repubblica Democratica del Congo</option>
+							<option value="DO">Repubblica Dominicana</option>
+							<option value="RE">Reunion</option>
+							<option value="RO">Romania</option>
+							<option value="RW">Ruanda</option>
+							<option value="RU">Russia</option>
+							<option value="EH">Sahara Occidentale</option>
+							<option value="KN">Saint Kitts e Nevis</option>
+							<option value="PM">Saint Pierre e Miquelon</option>
+							<option value="VC">Saint Vincent e Grenadine</option>
+							<option value="BL">Saint-Barthelemy</option>
+							<option value="MF">Saint-Martin</option>
+							<option value="WS">Samoa</option>
+							<option value="AS">Samoa Americane</option>
+							<option value="SM">San Marino</option>
+							<option value="SH">Sant'Elena</option>
+							<option value="LC">Santa Lucia</option>
+							<option value="ST">Sao Tome e Principe</option>
+							<option value="SN">Senegal</option>
+							<option value="RS">Serbia</option>
+							<option value="SC">Seychelles</option>
+							<option value="SL">Sierra Leone</option>
+							<option value="SG">Singapore</option>
+							<option value="SY">Siria</option>
+							<option value="SK">Slovacchia</option>
+							<option value="SI">Slovenia</option>
+							<option value="SB">Solomon Islands</option>
+							<option value="SO">Somalia</option>
+							<option value="ES">Spagna</option>
+							<option value="LK">Sri Lanka</option>
+							<option value="FM">Stati Federati di Micronesia</option>
+							<option value="US">Stati Uniti d'America</option>
+							<option value="ZA">Sudafrica</option>
+							<option value="SD">Sudan</option>
+							<option value="SR">Suriname</option>
+							<option value="SJ">Svalbard e Jan Mayen</option>
+							<option value="SE">Svezia</option>
+							<option value="CH">Svizzera</option>
+							<option value="SZ">Swaziland</option>
+							<option value="TJ">Tagikistan</option>
+							<option value="TW">Taiwan</option>
+							<option value="TZ">Tanzania</option>
+							<option value="IO">Territori Britannici dell'Oceano Indiano</option>
+							<option value="TF">Territori Francesi del Sud</option>
+							<option value="PS">Territori Palestinesi</option>
+							<option value="TH">Thailandia</option>
+							<option value="TL">Timor Est</option>
+							<option value="TG">Togo</option>
+							<option value="TK">Tokelau</option>
+							<option value="TO">Tonga</option>
+							<option value="TT">Trinidad e Tobago</option>
+							<option value="TN">Tunisia</option>
+							<option value="TR">Turchia</option>
+							<option value="TM">Turkmenistan</option>
+							<option value="TC">Turks e Caicos Islands</option>
+							<option value="TV">Tuvalu</option>
+							<option value="UA">Ucraina</option>
+							<option value="UG">Uganda</option>
+							<option value="HU">Ungheria</option>
+							<option value="UM">United States Minor Outlying Islands</option>
+							<option value="UY">Uruguay</option>
+							<option value="UZ">Uzbekistan</option>
+							<option value="VU">Vanuatu</option>
+							<option value="VE">Venezuela</option>
+							<option value="VN">Vietnam</option>
+							<option value="VG">Virgin Islands, British</option>
+							<option value="VI">Virgin Islands, U.S.</option>
+							<option value="WF">Wallis e Futuna</option>
+							<option value="YE">Yemen</option>
+							<option value="ZM">Zambia</option>
+							<option value="ZW">Zimbabwe</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td >Birth Province</td>
+					<td>
+						<select style="width:230px;"  class="registrant_company_field" name="registrant_company_repr_birthprovince" >
+							<option value=""></option>
+							<option value="--">Not in Italy</option>
+							<option value="ag">Agrigento</option>
+							<option value="al">Alessandria</option>
+							<option value="an">Ancona</option>
+							<option value="ao">Aosta</option>
+							<option value="ar">Arezzo</option>
+							<option value="ap">Ascoli Piceno</option>
+							<option value="at">Asti</option>
+							<option value="av">Avellino</option>
+							<option value="ba">Bari</option>
+							<option value="bt">Barletta Andria Trani</option>
+							<option value="bl">Belluno</option>
+							<option value="bn">Benevento</option>
+							<option value="bg">Bergamo</option>
+							<option value="bi">Biella</option>
+							<option value="bo">Bologna</option>
+							<option value="bz">Bolzano</option>
+							<option value="bs">Brescia</option>
+							<option value="br">Brindisi</option>
+							<option value="ca">Cagliari</option>
+							<option value="cl">Caltanissetta</option>
+							<option value="cb">Campobasso</option>
+							<option value="ci">Carbonia Inglesias</option>
+							<option value="ce">Caserta</option>
+							<option value="ct">Catania</option>
+							<option value="cz">Catanzaro</option>
+							<option value="ch">Chieti</option>
+							<option value="co">Como</option>
+							<option value="cs">Cosenza</option>
+							<option value="cr">Cremona</option>
+							<option value="kr">Crotone</option>
+							<option value="cn">Cuneo</option>
+							<option value="en">Enna</option>
+							<option value="fm">Fermo</option>
+							<option value="fe">Ferrara</option>
+							<option value="fi">Firenze</option>
+							<option value="fg">Foggia</option>
+							<option value="fc">Forli' e Cesena</option>
+							<option value="fr">Frosinone</option>
+							<option value="ge">Genova</option>
+							<option value="go">Gorizia</option>
+							<option value="gr">Grosseto</option>
+							<option value="im">Imperia</option>
+							<option value="is">Isernia</option>
+							<option value="aq">L'Aquila</option>
+							<option value="sp">La Spezia</option>
+							<option value="lt">Latina</option>
+							<option value="le">Lecce</option>
+							<option value="lc">Lecco</option>
+							<option value="li">Livorno</option>
+							<option value="lo">Lodi</option>
+							<option value="lu">Lucca</option>
+							<option value="mc">Macerata</option>
+							<option value="mn">Mantova</option>
+							<option value="ms">Massa Carrara</option>
+							<option value="mt">Matera</option>
+							<option value="vs">Medio Campidano</option>
+							<option value="me">Messina</option>
+							<option value="mi">Milano</option>
+							<option value="mo">Modena</option>
+							<option value="mb">Monza Brianza</option>
+							<option value="na">Napoli</option>
+							<option value="no">Novara</option>
+							<option value="nu">Nuoro</option>
+							<option value="og">Ogliastra</option>
+							<option value="ot">Olbia Tempio</option>
+							<option value="or">Oristano</option>
+							<option value="pd">Padova</option>
+							<option value="pa">Palermo</option>
+							<option value="pr">Parma</option>
+							<option value="pv">Pavia</option>
+							<option value="pg">Perugia</option>
+							<option value="pu">Pesaro e Urbino</option>
+							<option value="pe">Pescara</option>
+							<option value="pc">Piacenza</option>
+							<option value="pi">Pisa</option>
+							<option value="pt">Pistoia</option>
+							<option value="pn">Pordenone</option>
+							<option value="pz">Potenza</option>
+							<option value="po">Prato</option>
+							<option value="rg">Ragusa</option>
+							<option value="ra">Ravenna</option>
+							<option value="rc">Reggio Calabria</option>
+							<option value="re">Reggio Emilia</option>
+							<option value="ri">Rieti</option>
+							<option value="rn">Rimini</option>
+							<option value="rm">Roma</option>
+							<option value="ro">Rovigo</option>
+							<option value="sa">Salerno</option>
+							<option value="ss">Sassari</option>
+							<option value="sv">Savona</option>
+							<option value="si">Siena</option>
+							<option value="sr">Siracusa</option>
+							<option value="so">Sondrio</option>
+							<option value="ta">Taranto</option>
+							<option value="te">Teramo</option>
+							<option value="tr">Terni</option>
+							<option value="to">Torino</option>
+							<option value="tp">Trapani</option>
+							<option value="tn">Trento</option>
+							<option value="tv">Treviso</option>
+							<option value="ts">Trieste</option>
+							<option value="ud">Udine</option>
+							<option value="va">Varese</option>
+							<option value="ve">Venezia</option>
+							<option value="vb">Verbano</option>
+							<option value="vc">Vercelli</option>
+							<option value="vr">Verona</option>
+							<option value="vv">Vibo Valentia</option>
+							<option value="vi">Vicenza</option>
+							<option value="vt">Viterbo</option>
+
+						</select>
+					</td>
+				</tr>
+			</table>
+			<table id="registrant_box_person" style="display:none;">
+				<tr><td>&nbsp;</td></tr>
+				<tr>
+					<td  colspan="2" style="border-top: 1px solid #E7E7E7;"><h3>Person:</h3></td>
+				</tr>
+				<tr >
+					<td >Name</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_name" type="text" ></td>
+				</tr>
+				<tr >
+					<td >Surname</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_surname" type="text" /></td>
+				</tr>
+				<tr >
+					<td >Tax Code (Codice Fiscale)</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_cf" type="text" ></td>
+				</tr>
+				<tr >
+					<td >Date of Birth</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_birthdate" type="text" /></td>
+				</tr>
+				<tr >
+					<td >Birth Place</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_birthplace" type="text" /></td>
+				</tr>
+				<tr >
+					<td >Birth Nation</td>
+					<td>
+						<select style="width:230px;"  class="registrant_person_field" name="registrant_person_birthnation" >
+							<option value=""></option>
+							<option value="AF">Afghanistan</option>
+							<option value="AX">Aland Islands</option>
+							<option value="AL">Albania</option>
+							<option value="DZ">Algeria</option>
+							<option value="AD">Andorra</option>
+							<option value="AO">Angola</option>
+							<option value="AI">Anguilla</option>
+							<option value="AQ">Antartico</option>
+							<option value="AG">Antigua e Barbuda</option>
+							<option value="AN">Antille Olandesi</option>
+							<option value="SA">Arabia Saudita</option>
+							<option value="AR">Argentina</option>
+							<option value="AM">Armenia</option>
+							<option value="AW">Aruba</option>
+							<option value="AU">Australia</option>
+							<option value="AT">Austria</option>
+							<option value="AZ">Azerbaijan</option>
+							<option value="BS">Bahamas</option>
+							<option value="BH">Bahrain</option>
+							<option value="BD">Bangladesh</option>
+							<option value="BB">Barbados</option>
+							<option value="BE">Belgio</option>
+							<option value="BZ">Belize</option>
+							<option value="BJ">Benin</option>
+							<option value="BM">Bermuda</option>
+							<option value="BT">Bhutan</option>
+							<option value="BY">Bielorussia</option>
+							<option value="BO">Bolivia</option>
+							<option value="BA">Bosnia-Erzegovina</option>
+							<option value="BW">Botswana</option>
+							<option value="BV">Bouvet Island</option>
+							<option value="BR">Brasile</option>
+							<option value="BN">Brunei</option>
+							<option value="BG">Bulgaria</option>
+							<option value="BF">Burkina Faso</option>
+							<option value="BI">Burundi</option>
+							<option value="KH">Cambogia</option>
+							<option value="CM">Camerun</option>
+							<option value="CA">Canada</option>
+							<option value="CV">Capo Verde</option>
+							<option value="KY">Cayman Islands</option>
+							<option value="CX">Christmas Island</option>
+							<option value="TD">Ciad</option>
+							<option value="CL">Cile</option>
+							<option value="CN">Cina</option>
+							<option value="CY">Cipro</option>
+							<option value="VA">Città del Vaticano</option>
+							<option value="CC">Cocos Islands</option>
+							<option value="CO">Colombia</option>
+							<option value="KM">Comore</option>
+							<option value="CK">Cook Islands</option>
+							<option value="KP">Corea del Nord</option>
+							<option value="KR">Corea del Sud</option>
+							<option value="CI">Costa d'Avorio</option>
+							<option value="CR">Costa Rica</option>
+							<option value="HR">Croazia</option>
+							<option value="CU">Cuba</option>
+							<option value="DK">Danimarca</option>
+							<option value="DM">Dominica</option>
+							<option value="EC">Ecuador</option>
+							<option value="EG">Egitto</option>
+							<option value="SV">El Salvador</option>
+							<option value="AE">Emirati Arabi Uniti</option>
+							<option value="ER">Eritrea</option>
+							<option value="EE">Estonia</option>
+							<option value="ET">Etiopia</option>
+							<option value="FK">Falkland Islands</option>
+							<option value="FO">Faroe Islands</option>
+							<option value="FJ">Figi</option>
+							<option value="PH">Filippine</option>
+							<option value="FI">Finlandia</option>
+							<option value="FR">Francia</option>
+							<option value="GA">Gabon</option>
+							<option value="GM">Gambia</option>
+							<option value="GE">Georgia</option>
+							<option value="GS">Georgia del Sud e isole Sandwich meridionali</option>
+							<option value="DE">Germania</option>
+							<option value="GH">Ghana</option>
+							<option value="JM">Giamaica</option>
+							<option value="JP">Giappone</option>
+							<option value="GI">Gibilterra</option>
+							<option value="DJ">Gibuti</option>
+							<option value="JO">Giordania</option>
+							<option value="GB">Gran bretagna</option>
+							<option value="GR">Grecia</option>
+							<option value="GD">Grenada</option>
+							<option value="GL">Groenlandia</option>
+							<option value="GP">Guadalupa</option>
+							<option value="GU">Guam</option>
+							<option value="GT">Guatemala</option>
+							<option value="GG">Guernsey</option>
+							<option value="GN">Guinea</option>
+							<option value="GQ">Guinea Equatoriale</option>
+							<option value="GW">Guinea-Bissau</option>
+							<option value="GY">Guyana</option>
+							<option value="GF">Guyana Francese</option>
+							<option value="HT">Haiti</option>
+							<option value="HM">Heard Island e McDonald Islands</option>
+							<option value="HN">Honduras</option>
+							<option value="HK">Hong Kong</option>
+							<option value="IN">India</option>
+							<option value="ID">Indonesia</option>
+							<option value="IR">Iran</option>
+							<option value="IQ">Iraq</option>
+							<option value="IE">Irlanda</option>
+							<option value="IS">Islanda</option>
+							<option value="IM">Isle of Man</option>
+							<option value="IL">Israele</option>
+							<option value="IT">Italia</option>
+							<option value="JE">Jersey</option>
+							<option value="KZ">Kazakistan</option>
+							<option value="KE">Kenya</option>
+							<option value="KG">Kirghizistan</option>
+							<option value="KI">Kiribati</option>
+							<option value="KW">Kuwait</option>
+							<option value="LA">Laos</option>
+							<option value="LS">Lesotho</option>
+							<option value="LV">Lettonia</option>
+							<option value="LB">Libano</option>
+							<option value="LR">Liberia</option>
+							<option value="LY">Libia</option>
+							<option value="LI">Liechtenstein</option>
+							<option value="LT">Lituania</option>
+							<option value="LU">Lussemburgo</option>
+							<option value="MO">Macao</option>
+							<option value="MK">Macedonia</option>
+							<option value="MG">Madagascar</option>
+							<option value="MW">Malawi</option>
+							<option value="MV">Maldive</option>
+							<option value="MY">Malesia</option>
+							<option value="ML">Mali</option>
+							<option value="MT">Malta</option>
+							<option value="MA">Marocco</option>
+							<option value="MH">Marshall Islands</option>
+							<option value="MQ">Martinica</option>
+							<option value="MR">Mauritania</option>
+							<option value="MU">Mauritius</option>
+							<option value="YT">Mayotte</option>
+							<option value="MX">Messico</option>
+							<option value="MD">Moldavia</option>
+							<option value="MC">Monaco</option>
+							<option value="MN">Mongolia</option>
+							<option value="ME">Montenegro</option>
+							<option value="MS">Montserrat</option>
+							<option value="MZ">Mozambico</option>
+							<option value="MM">Myanmar</option>
+							<option value="NA">Namibia</option>
+							<option value="NR">Nauru</option>
+							<option value="NP">Nepal</option>
+							<option value="NI">Nicaragua</option>
+							<option value="NE">Niger</option>
+							<option value="NG">Nigeria</option>
+							<option value="NU">Niue</option>
+							<option value="NF">Norfolk Island</option>
+							<option value="MP">Northern Mariana Islands</option>
+							<option value="NO">Norvegia</option>
+							<option value="NC">Nuova Caledonia</option>
+							<option value="NZ">Nuova Zelanda</option>
+							<option value="OM">Oman</option>
+							<option value="NL">Paesi Bassi</option>
+							<option value="PK">Pakistan</option>
+							<option value="PW">Palau</option>
+							<option value="PA">Panamà</option>
+							<option value="PG">Papua Nuova Guinea</option>
+							<option value="PY">Paraguay</option>
+							<option value="PE">Perù</option>
+							<option value="PN">Pitcairn</option>
+							<option value="PF">Polinesia Francese</option>
+							<option value="PL">Polonia</option>
+							<option value="PR">Porto Rico</option>
+							<option value="PT">Portogallo</option>
+							<option value="QA">Qatar</option>
+							<option value="CZ">Repubblica Ceca</option>
+							<option value="CF">Repubblica Centrafricana</option>
+							<option value="CG">Repubblica del Congo</option>
+							<option value="CD">Repubblica Democratica del Congo</option>
+							<option value="DO">Repubblica Dominicana</option>
+							<option value="RE">Reunion</option>
+							<option value="RO">Romania</option>
+							<option value="RW">Ruanda</option>
+							<option value="RU">Russia</option>
+							<option value="EH">Sahara Occidentale</option>
+							<option value="KN">Saint Kitts e Nevis</option>
+							<option value="PM">Saint Pierre e Miquelon</option>
+							<option value="VC">Saint Vincent e Grenadine</option>
+							<option value="BL">Saint-Barthelemy</option>
+							<option value="MF">Saint-Martin</option>
+							<option value="WS">Samoa</option>
+							<option value="AS">Samoa Americane</option>
+							<option value="SM">San Marino</option>
+							<option value="SH">Sant'Elena</option>
+							<option value="LC">Santa Lucia</option>
+							<option value="ST">Sao Tome e Principe</option>
+							<option value="SN">Senegal</option>
+							<option value="RS">Serbia</option>
+							<option value="SC">Seychelles</option>
+							<option value="SL">Sierra Leone</option>
+							<option value="SG">Singapore</option>
+							<option value="SY">Siria</option>
+							<option value="SK">Slovacchia</option>
+							<option value="SI">Slovenia</option>
+							<option value="SB">Solomon Islands</option>
+							<option value="SO">Somalia</option>
+							<option value="ES">Spagna</option>
+							<option value="LK">Sri Lanka</option>
+							<option value="FM">Stati Federati di Micronesia</option>
+							<option value="US">Stati Uniti d'America</option>
+							<option value="ZA">Sudafrica</option>
+							<option value="SD">Sudan</option>
+							<option value="SR">Suriname</option>
+							<option value="SJ">Svalbard e Jan Mayen</option>
+							<option value="SE">Svezia</option>
+							<option value="CH">Svizzera</option>
+							<option value="SZ">Swaziland</option>
+							<option value="TJ">Tagikistan</option>
+							<option value="TW">Taiwan</option>
+							<option value="TZ">Tanzania</option>
+							<option value="IO">Territori Britannici dell'Oceano Indiano</option>
+							<option value="TF">Territori Francesi del Sud</option>
+							<option value="PS">Territori Palestinesi</option>
+							<option value="TH">Thailandia</option>
+							<option value="TL">Timor Est</option>
+							<option value="TG">Togo</option>
+							<option value="TK">Tokelau</option>
+							<option value="TO">Tonga</option>
+							<option value="TT">Trinidad e Tobago</option>
+							<option value="TN">Tunisia</option>
+							<option value="TR">Turchia</option>
+							<option value="TM">Turkmenistan</option>
+							<option value="TC">Turks e Caicos Islands</option>
+							<option value="TV">Tuvalu</option>
+							<option value="UA">Ucraina</option>
+							<option value="UG">Uganda</option>
+							<option value="HU">Ungheria</option>
+							<option value="UM">United States Minor Outlying Islands</option>
+							<option value="UY">Uruguay</option>
+							<option value="UZ">Uzbekistan</option>
+							<option value="VU">Vanuatu</option>
+							<option value="VE">Venezuela</option>
+							<option value="VN">Vietnam</option>
+							<option value="VG">Virgin Islands, British</option>
+							<option value="VI">Virgin Islands, U.S.</option>
+							<option value="WF">Wallis e Futuna</option>
+							<option value="YE">Yemen</option>
+							<option value="ZM">Zambia</option>
+							<option value="ZW">Zimbabwe</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td >Birth Province</td>
+					<td>
+						<select style="width:230px;"  class="registrant_person_field" name="registrant_person_birthprovince" >
+							<option value=""></option>
+							<option value="--">Not in Italy</option>
+							<option value="ag">Agrigento</option>
+							<option value="al">Alessandria</option>
+							<option value="an">Ancona</option>
+							<option value="ao">Aosta</option>
+							<option value="ar">Arezzo</option>
+							<option value="ap">Ascoli Piceno</option>
+							<option value="at">Asti</option>
+							<option value="av">Avellino</option>
+							<option value="ba">Bari</option>
+							<option value="bt">Barletta Andria Trani</option>
+							<option value="bl">Belluno</option>
+							<option value="bn">Benevento</option>
+							<option value="bg">Bergamo</option>
+							<option value="bi">Biella</option>
+							<option value="bo">Bologna</option>
+							<option value="bz">Bolzano</option>
+							<option value="bs">Brescia</option>
+							<option value="br">Brindisi</option>
+							<option value="ca">Cagliari</option>
+							<option value="cl">Caltanissetta</option>
+							<option value="cb">Campobasso</option>
+							<option value="ci">Carbonia Inglesias</option>
+							<option value="ce">Caserta</option>
+							<option value="ct">Catania</option>
+							<option value="cz">Catanzaro</option>
+							<option value="ch">Chieti</option>
+							<option value="co">Como</option>
+							<option value="cs">Cosenza</option>
+							<option value="cr">Cremona</option>
+							<option value="kr">Crotone</option>
+							<option value="cn">Cuneo</option>
+							<option value="en">Enna</option>
+							<option value="fm">Fermo</option>
+							<option value="fe">Ferrara</option>
+							<option value="fi">Firenze</option>
+							<option value="fg">Foggia</option>
+							<option value="fc">Forli' e Cesena</option>
+							<option value="fr">Frosinone</option>
+							<option value="ge">Genova</option>
+							<option value="go">Gorizia</option>
+							<option value="gr">Grosseto</option>
+							<option value="im">Imperia</option>
+							<option value="is">Isernia</option>
+							<option value="aq">L'Aquila</option>
+							<option value="sp">La Spezia</option>
+							<option value="lt">Latina</option>
+							<option value="le">Lecce</option>
+							<option value="lc">Lecco</option>
+							<option value="li">Livorno</option>
+							<option value="lo">Lodi</option>
+							<option value="lu">Lucca</option>
+							<option value="mc">Macerata</option>
+							<option value="mn">Mantova</option>
+							<option value="ms">Massa Carrara</option>
+							<option value="mt">Matera</option>
+							<option value="vs">Medio Campidano</option>
+							<option value="me">Messina</option>
+							<option value="mi">Milano</option>
+							<option value="mo">Modena</option>
+							<option value="mb">Monza Brianza</option>
+							<option value="na">Napoli</option>
+							<option value="no">Novara</option>
+							<option value="nu">Nuoro</option>
+							<option value="og">Ogliastra</option>
+							<option value="ot">Olbia Tempio</option>
+							<option value="or">Oristano</option>
+							<option value="pd">Padova</option>
+							<option value="pa">Palermo</option>
+							<option value="pr">Parma</option>
+							<option value="pv">Pavia</option>
+							<option value="pg">Perugia</option>
+							<option value="pu">Pesaro e Urbino</option>
+							<option value="pe">Pescara</option>
+							<option value="pc">Piacenza</option>
+							<option value="pi">Pisa</option>
+							<option value="pt">Pistoia</option>
+							<option value="pn">Pordenone</option>
+							<option value="pz">Potenza</option>
+							<option value="po">Prato</option>
+							<option value="rg">Ragusa</option>
+							<option value="ra">Ravenna</option>
+							<option value="rc">Reggio Calabria</option>
+							<option value="re">Reggio Emilia</option>
+							<option value="ri">Rieti</option>
+							<option value="rn">Rimini</option>
+							<option value="rm">Roma</option>
+							<option value="ro">Rovigo</option>
+							<option value="sa">Salerno</option>
+							<option value="ss">Sassari</option>
+							<option value="sv">Savona</option>
+							<option value="si">Siena</option>
+							<option value="sr">Siracusa</option>
+							<option value="so">Sondrio</option>
+							<option value="ta">Taranto</option>
+							<option value="te">Teramo</option>
+							<option value="tr">Terni</option>
+							<option value="to">Torino</option>
+							<option value="tp">Trapani</option>
+							<option value="tn">Trento</option>
+							<option value="tv">Treviso</option>
+							<option value="ts">Trieste</option>
+							<option value="ud">Udine</option>
+							<option value="va">Varese</option>
+							<option value="ve">Venezia</option>
+							<option value="vb">Verbano</option>
+							<option value="vc">Vercelli</option>
+							<option value="vr">Verona</option>
+							<option value="vv">Vibo Valentia</option>
+							<option value="vi">Vicenza</option>
+							<option value="vt">Viterbo</option>
+
+						</select>
+					</td>
+				</tr>
+				<tr><td>&nbsp;</td></tr>
+				<tr>
+					<td  colspan="2" style="border-top: 1px solid #E7E7E7;"><h3>Address:</h3></td>
+				</tr>
+				<tr >
+					<td >Address</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_address" type="text" /></td>
+				</tr>
+				<tr >
+					<td >City</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_city" type="text" /></td>
+				</tr>
+				<tr >
+					<td >ZIP code (CAP)</td>
+					<td><input class="registrant_person_field" name="registrant_person_zip" type="text" maxlength="7" /></td>
+				</tr>
+				<tr >
+					<td >Nation</td>
+					<td>
+						<select style="width:230px;"  class="registrant_person_field" name="registrant_person_nation">
+							<option value=""></option>
+							<option value="AT">Austria</option>
+							<option value="BE">Belgio</option>
+							<option value="BG">Bulgaria</option>
+							<option value="CY">Cipro</option>
+							<option value="DK">Danimarca</option>
+							<option value="EE">Estonia</option>
+							<option value="FI">Finlandia</option>
+							<option value="FR">Francia</option>
+							<option value="DE">Germania</option>
+							<option value="GB">Gran bretagna</option>
+							<option value="GR">Grecia</option>
+							<option value="IE">Irlanda</option>
+							<option value="IT">Italia</option>
+							<option value="LV">Lettonia</option>
+							<option value="LT">Lituania</option>
+							<option value="LU">Lussemburgo</option>
+							<option value="MT">Malta</option>
+							<option value="NL">Paesi Bassi</option>
+							<option value="PL">Polonia</option>
+							<option value="PT">Portogallo</option>
+							<option value="CZ">Repubblica Ceca</option>
+							<option value="RO">Romania</option>
+							<option value="SK">Slovacchia</option>
+							<option value="SI">Slovenia</option>
+							<option value="ES">Spagna</option>
+							<option value="SE">Svezia</option>
+							<option value="HU">Ungheria</option>
+						</select>
+					</td>
+				</tr>
+				<tr >
+					<td >Province</td>
+					<td>
+						<select style="width:230px;"  class="registrant_person_field" name="registrant_person_province" >
+							<option value=""></option>
+							<option value="--">Not in Italy</option>
+							<option value="ag">Agrigento</option>
+							<option value="al">Alessandria</option>
+							<option value="an">Ancona</option>
+							<option value="ao">Aosta</option>
+							<option value="ar">Arezzo</option>
+							<option value="ap">Ascoli Piceno</option>
+							<option value="at">Asti</option>
+							<option value="av">Avellino</option>
+							<option value="ba">Bari</option>
+							<option value="bt">Barletta Andria Trani</option>
+							<option value="bl">Belluno</option>
+							<option value="bn">Benevento</option>
+							<option value="bg">Bergamo</option>
+							<option value="bi">Biella</option>
+							<option value="bo">Bologna</option>
+							<option value="bz">Bolzano</option>
+							<option value="bs">Brescia</option>
+							<option value="br">Brindisi</option>
+							<option value="ca">Cagliari</option>
+							<option value="cl">Caltanissetta</option>
+							<option value="cb">Campobasso</option>
+							<option value="ci">Carbonia Inglesias</option>
+							<option value="ce">Caserta</option>
+							<option value="ct">Catania</option>
+							<option value="cz">Catanzaro</option>
+							<option value="ch">Chieti</option>
+							<option value="co">Como</option>
+							<option value="cs">Cosenza</option>
+							<option value="cr">Cremona</option>
+							<option value="kr">Crotone</option>
+							<option value="cn">Cuneo</option>
+							<option value="en">Enna</option>
+							<option value="fm">Fermo</option>
+							<option value="fe">Ferrara</option>
+							<option value="fi">Firenze</option>
+							<option value="fg">Foggia</option>
+							<option value="fc">Forli' e Cesena</option>
+							<option value="fr">Frosinone</option>
+							<option value="ge">Genova</option>
+							<option value="go">Gorizia</option>
+							<option value="gr">Grosseto</option>
+							<option value="im">Imperia</option>
+							<option value="is">Isernia</option>
+							<option value="aq">L'Aquila</option>
+							<option value="sp">La Spezia</option>
+							<option value="lt">Latina</option>
+							<option value="le">Lecce</option>
+							<option value="lc">Lecco</option>
+							<option value="li">Livorno</option>
+							<option value="lo">Lodi</option>
+							<option value="lu">Lucca</option>
+							<option value="mc">Macerata</option>
+							<option value="mn">Mantova</option>
+							<option value="ms">Massa Carrara</option>
+							<option value="mt">Matera</option>
+							<option value="vs">Medio Campidano</option>
+							<option value="me">Messina</option>
+							<option value="mi">Milano</option>
+							<option value="mo">Modena</option>
+							<option value="mb">Monza Brianza</option>
+							<option value="na">Napoli</option>
+							<option value="no">Novara</option>
+							<option value="nu">Nuoro</option>
+							<option value="og">Ogliastra</option>
+							<option value="ot">Olbia Tempio</option>
+							<option value="or">Oristano</option>
+							<option value="pd">Padova</option>
+							<option value="pa">Palermo</option>
+							<option value="pr">Parma</option>
+							<option value="pv">Pavia</option>
+							<option value="pg">Perugia</option>
+							<option value="pu">Pesaro e Urbino</option>
+							<option value="pe">Pescara</option>
+							<option value="pc">Piacenza</option>
+							<option value="pi">Pisa</option>
+							<option value="pt">Pistoia</option>
+							<option value="pn">Pordenone</option>
+							<option value="pz">Potenza</option>
+							<option value="po">Prato</option>
+							<option value="rg">Ragusa</option>
+							<option value="ra">Ravenna</option>
+							<option value="rc">Reggio Calabria</option>
+							<option value="re">Reggio Emilia</option>
+							<option value="ri">Rieti</option>
+							<option value="rn">Rimini</option>
+							<option value="rm">Roma</option>
+							<option value="ro">Rovigo</option>
+							<option value="sa">Salerno</option>
+							<option value="ss">Sassari</option>
+							<option value="sv">Savona</option>
+							<option value="si">Siena</option>
+							<option value="sr">Siracusa</option>
+							<option value="so">Sondrio</option>
+							<option value="ta">Taranto</option>
+							<option value="te">Teramo</option>
+							<option value="tr">Terni</option>
+							<option value="to">Torino</option>
+							<option value="tp">Trapani</option>
+							<option value="tn">Trento</option>
+							<option value="tv">Treviso</option>
+							<option value="ts">Trieste</option>
+							<option value="ud">Udine</option>
+							<option value="va">Varese</option>
+							<option value="ve">Venezia</option>
+							<option value="vb">Verbano</option>
+							<option value="vc">Vercelli</option>
+							<option value="vr">Verona</option>
+							<option value="vv">Vibo Valentia</option>
+							<option value="vi">Vicenza</option>
+							<option value="vt">Viterbo</option>
+						</select>
+					</td>
+				</tr>
+				<tr >
+					<td >Phone</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_phone" type="text" /></td>
+				</tr>
+				<tr >
+					<td >E-Mail</td>
+					<td><input style="width:230px;"  class="registrant_person_field" name="registrant_person_email" type="text" /></td>
+				</tr>
+			</table>
+			<table style="width:100%;">
+				<tr><td>&nbsp;</td></tr>
+				<tr>
+					<td style="border-top: 1px solid #E7E7E7;padding-top:15px;">
+						<div class="successDomain" id="registrant_validated" style="display:none;">Registrant Validated</div>
+						<div class="warningDomain" id="registrant_unvalidated" style="display:none;">Please fill in all Registrant data</div>
+					</td>
+				</tr>
+			</table>
+            </td>
+          </tr>
+      <?php 		} ?>
+      <?php 	} ?>
+        </table>
+      </div>
+      <?php } ?>
+      <div class="cart">]]></add>
+		</operation>
+		
+		<!-- inhibit button-cart just after click -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$('#button-cart').bind('click', function() {]]></search>
+			<add><![CDATA[$('#button-cart').bind('click', function() {
+	$('#button-cart').prop('disabled', true);
+			]]></add>
+		</operation>
+
+		<!-- then add ajax call to store hosting options when adding to cart a product -->
+		<operation error="abort" >
+			<search position="before"><![CDATA[$('#notification').html('<div class="success" style="display: none;">' + json['success'] + '<img src="catalog/view/theme/default/image/close.png" alt="" class="close" /></div>');]]></search>
+			<add><![CDATA[  
+				$.ajax({
+					url: 'index.php?route=burro/hosting/add',
+					type: 'post',
+					data: { 
+						'product_id' : $('input[name="product_id"]').val(), 
+						'is_hosting' : $('input[name="is_hosting"]').val(), 
+						'hosting_domain' : $('input[name="hosting_domain"]').val(), 
+						'hosting_domain_extension' : $('select[name="hosting_domain_extension"]').val(), 
+						'hosting_domain_selected' : $('select[name="hosting_domain_selected"]').val(), 
+						'hosting_mailbox_selected' : $('select[name="hosting_mailbox_selected"]').val(),
+						'hosting_duration' : $('input[name="hosting_duration"]').val(),
+						'hosting_size' : $('input[name="hosting_size"]').val(),
+						'hosting_quantity' : $('input[name="hosting_quantity"]').val(),
+						'hosting_renew_order_hosting_id' : $('select[name="hosting_renew_order_hosting_id"]').val(),
+						'hosting_registrant_type' : $("input[name='registrant_type']:checked").val(),
+						'hosting_registrant_company' : $(".registrant_company_field").serialize(),
+						'hosting_registrant_person' : $(".registrant_person_field").serialize()
+					},
+					dataType: 'json',
+					success: function(jsonHosting) {
+						if (jsonHosting['error']) {
+							alert("error storing hosting to sessions");
+						} 
+						if (jsonHosting['success']) {
+							$('input[name="hosting_domain"]').val('');
+							$('#button-cart').prop('disabled', false);
+							if(typeof resetDom == 'function') {
+								resetDom(true);
+							}
+			]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="after"><![CDATA[$('html, body').animate({ scrollTop: 0 }, 'slow');]]></search>
+			<add><![CDATA[  
+						}	
+					}
+				});
+			
+			]]></add>
+		</operation>
+		
+	</file>
+	
+	
+</modification>

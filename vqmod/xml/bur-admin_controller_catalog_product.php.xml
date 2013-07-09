@@ -1,0 +1,52 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################  PRODUCT CONTROLLER  ################################################################## -->
+	<!-- ############################################################################################################################# -->
+	<!-- add Burro to product controller -->
+	<file name="admin/controller/catalog/product.php">
+		<!-- getForm -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->data['button_add_special'] = $this->language->get('button_add_special');]]></search>
+			<add><![CDATA[$this->data['button_add_hosting'] = 'Add Service';
+		$this->data['button_add_special'] = $this->language->get('button_add_special');]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->data['tab_special'] = $this->language->get('tab_special');]]></search>
+			<add><![CDATA[$this->data['tab_hosting'] = 'Hostings';
+		$this->data['tab_special'] = $this->language->get('tab_special');]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[if (isset($this->request->post['product_special'])) {]]></search>
+			<add><![CDATA[if (isset($this->request->post['product_hosting'])) {
+			//che è sta roba?
+			$this->data['product_hostings'] = $this->request->post['product_hosting'];
+		} elseif (isset($this->request->get['product_id'])) {
+			$this->data['product_hostings'] = $this->model_catalog_product->getProductHostings($this->request->get['product_id']);
+		} else {
+			$this->data['product_hostings'] = array();
+		}
+		
+		if (isset($this->request->post['product_special'])) {]]></add>
+		</operation>
+		
+	</file>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</modification>	
+	

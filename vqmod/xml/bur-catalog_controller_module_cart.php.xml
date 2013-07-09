@@ -1,0 +1,47 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################  MODULE CONTROLLER  ################################################################### -->
+	<!-- ############################################################################################################################# -->
+	
+	<!-- add population of hosting data for products array used in cart tpl ( also in the header cart ) -->
+	<file name="catalog/controller/module/cart.php,catalog/controller/checkout/cart.php">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->data['products'][] = array(]]></search>
+			<add><![CDATA[
+				//get hostings for this product
+				$this->load->model('burro/hosting');
+				$product_hostings = $this->model_burro_hosting->getHostingsFromSessions($product['product_id']);
+				$this->data['products'][] = array(
+					'hostings'      => $product_hostings,
+					]]></add>
+		</operation>
+	</file>
+
+
+	<!-- when removing an item from cart, also remove related hostings (this is used from the header cart)-->
+	<file name="catalog/controller/module/cart.php"> 
+		<operation error="abort" >
+			<search position="replace"><![CDATA[unset($this->session->data['vouchers'][$this->request->get['remove']]);]]></search>
+			<add><![CDATA[unset($this->session->data['vouchers'][$this->request->get['remove']]);
+			
+			//remove hosting from sessions
+			if ( $this->request->get['remove'] > 0 ) {
+				//$this->log->write("rimuovo: ".$this->request->get['remove']);
+				$this->load->model('burro/hosting');
+				$this->model_burro_hosting->removeHostingFromSessions($this->request->get['remove']);
+			}
+			
+			]]></add>
+		</operation>
+	</file>
+
+
+
+</modification>	
+
