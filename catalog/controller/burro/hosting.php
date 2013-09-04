@@ -25,16 +25,6 @@ class ControllerBurroHosting extends Controller {
 			
 			//this version uses whois shell command
 			$whoisOutput = shell_exec('whois '.$domain);
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
-			//$this->log->write("##############################################");
 			//$this->log->writeVar($whoisOutput);
 			
 			if
@@ -90,60 +80,6 @@ class ControllerBurroHosting extends Controller {
 				//domain is registered!
 				$result = array( false, $whoisOutput );
 			}
-
-			
-			
-			/* this version uses phpwhois library
-			$whois = new Whois();
-			$whois->deep_whois = false;
-			$result = $whois->Lookup($domain,false);
-			$this->log->write("domainAvail() per ".$domain." ottengo:");
-			$this->log->writeVar($result);
-			
-			if ( isset($result["rawdata"]) && count($result["rawdata"]) > 0 ) {
-				$rawdata = implode("",$result["rawdata"]);
-			} else {
-				$rawdata = "";
-			}
-			
-			if ( 
-				( 
-					isset($result["regrinfo"]["registered"]) 
-					&& 
-					$result["regrinfo"]["registered"] == "no" 
-				) 
-				||
-				( 
-					isset($result["regrinfo"]["domain"]["status"]) 
-					&& 
-					$result["regrinfo"]["domain"]["status"] == "AVAILABLE" 
-				) 
-				|| 
-				( 
-					isset($result["rawdata"][0]) 
-					&& 
-					$result["rawdata"][0] == "NOT FOUND" 
-				) 
-				|| 
-				( 
-					(strpos($rawdata,'No match for domain') !== false)
-				) 
-				|| 
-				( 
-					(strpos($rawdata,'This domain name has not been registered') !== false)
-				)  
-				|| 
-				( 
-					(strpos($rawdata,'The domain has not been registered') !== false)
-				)  
-			) { 
-				//domain is available!
-				$result = array( true, implode("\n",$result["rawdata"]) );
-			} else {
-				//domain is registered!
-				$result = array( false, implode("\n",$result["rawdata"]) );
-			}
-			*/
 			
 		} 
 
@@ -165,11 +101,39 @@ class ControllerBurroHosting extends Controller {
 		} else {
 			$is_hosting = 'no';
 		}
-		if (isset($this->request->post['hosting_domain'])) {
+		if (isset($this->request->post['hosting_renew_order_hosting_id']) && (int)$this->request->post['hosting_renew_order_hosting_id'] > 0 ) {
+			//sto aggiungendo un rinnovo di hosting esistente
+			$hosting_renew_order_hosting_id = (int)$this->request->post['hosting_renew_order_hosting_id'];
+			//la data di inizio del nuovo servizio deve essere uguale alla data di scadenza dell'hosting che sto rinnovando, nella forma "2012-07-22 00:00:00"
+			$hosting_renew_date_start = $this->request->post['hosting_renew_date_end']; 
+			//calcolo la nuova data di scadenza
+			$old_date_start = date_create_from_format('Y-m-d H:i:s', $this->request->post['hosting_renew_date_start']);
+			$old_date_start->setTime(0,0,0);
+			$old_date_end = date_create_from_format('Y-m-d H:i:s', $this->request->post['hosting_renew_date_end']);
+			$old_date_end->setTime(0,0,0);
+			//$this->log->writeVar($old_date_end);
+			//$this->log->writeVar($old_date_start);
+			//calcolo la durata (interval_days) del vecchio (e quindi anche del nuovo) servizio
+			$interval = $old_date_start->diff($old_date_end);
+			$interval_days = (int)$interval->format('%R%a');
+			//la nuova data di scadenza sarà data dalla scadenza del vecchio servizio più la durata
+			date_modify($old_date_end, '+'.$interval_days.' days');
+			$hosting_renew_date_end = $old_date_end->format('Y-m-d H:i:s');
+			//salvo anche il vecchio server
+			$hosting_renew_server = $this->request->post['hosting_renew_server'];
+		} else {
+			//sto aggiungengo un nuovo hosting
+			$hosting_renew_order_hosting_id = 0;
+			$hosting_renew_date_start = "";
+			$hosting_renew_date_end = "";
+			$hosting_renew_server = "";
+		}
+		if (isset($this->request->post['hosting_domain'])) { 
 			$hosting_domain = $this->request->post['hosting_domain'];
 		} else {
 			$hosting_domain = '';
 		}
+		/*
 		if (isset($this->request->post['hosting_duration'])) {
 			$hosting_duration = (int)$this->request->post['hosting_duration'];
 		} else {
@@ -185,6 +149,8 @@ class ControllerBurroHosting extends Controller {
 		} else {
 			$hosting_quantity = 0;
 		}
+		*/
+		
 		if (isset($this->request->post['hosting_domain_extension'])) {
 			$hosting_domain_extension = $this->request->post['hosting_domain_extension'];
 		} else {
@@ -223,33 +189,29 @@ class ControllerBurroHosting extends Controller {
 		} else {
 			$hosting_registrant_person = array();
 		}
-		/*
-		$this->log->write("hosting.php add(): hosting_registrant_type:");
-		$this->log->writeVar($hosting_registrant_type);
-		$this->log->write("hosting.php add(): hosting_registrant_company:");
-		$this->log->writeVar($hosting_registrant_company);
-		$this->log->write("hosting.php add(): hosting_registrant_person:");
-		$this->log->writeVar($hosting_registrant_person);
-		*/
-		
-		
-		
-		
-		
+		if (isset($this->request->post['hosting_registrant'])) {
+			$hosting_registrant = $this->request->post['hosting_registrant'];
+		} else {
+			$hosting_registrant = array();
+		}
 		
 		if ( $is_hosting == 'yes' ) {
 			/*
 			$this->log->write( "ciao, sono catalog/controller/burro/hosting/add(), e mi arriva in post:" );
 			$this->log->writeVar($this->request->post);
-			$this->log->write( "da cui estraggo product_id = ".$product_id );
-			$this->log->write( "da cui estraggo hosting_duration = ".$hosting_duration );
-			$this->log->write( "da cui estraggo hosting_size = ".$hosting_size );
-			$this->log->write( "da cui estraggo hosting_quantity = ".$hosting_quantity );
-			$this->log->write( "da cui estraggo hosting_domain = ".$hosting_domain );
-			$this->log->write( "da cui estraggo hosting_domain_extension = ".$hosting_domain_extension );
-			$this->log->write( "da cui estraggo hosting_domain_selected = ".$hosting_domain_selected );
-			$this->log->write( "da cui estraggo hosting_mailbox_selected = ".$hosting_mailbox_selected );
 			*/
+			
+			//must populate with hostings saved in oc_product_hostings for my product_id
+			$this->load->model('burro/hosting');
+			$hostings = $this->model_burro_hosting->getProductHostings($product_id);
+			
+			//get longest hosting associated to product, and have duration for oc_order_hostings
+			$hosting_duration = 0;
+			foreach ( $hostings as $my_hosting ) {
+				if ( isset( $my_hosting['duration'] ) &&  (int)$my_hosting['duration'] > $hosting_duration ) {
+					$hosting_duration = (int)$my_hosting['duration'];
+				}
+			}
 			
 			//if sessions for hostings are not created yet, init it!
 			if ( !isset( $this->session->data['hostings'] ) ) $this->session->data['hostings'] = array();
@@ -263,12 +225,17 @@ class ControllerBurroHosting extends Controller {
 					'hosting_domain_selected' => $hosting_domain_selected,
 					'hosting_mailbox_selected' => $hosting_mailbox_selected,
 					'hosting_duration' => $hosting_duration,
-					'hosting_size' => $hosting_size,
-					'hosting_quantity' => $hosting_quantity,
-					'hosting_renew_order_hosting_id' => 0, //QUI!!! DA FARE
+					//'hosting_size' => $hosting_size,
+					//'hosting_quantity' => $hosting_quantity,
+					'hostings' => $hostings,
+					'hosting_renew_order_hosting_id' => $hosting_renew_order_hosting_id,
 					'hosting_registrant_type' => $hosting_registrant_type,
 					'hosting_registrant_company' => $hosting_registrant_company,
-					'hosting_registrant_person' => $hosting_registrant_person
+					'hosting_registrant_person' => $hosting_registrant_person,
+					'hosting_registrant' => $hosting_registrant,
+					'hosting_renew_date_start' => $hosting_renew_date_start,
+					'hosting_renew_date_end' => $hosting_renew_date_end,
+					'hosting_renew_server' => $hosting_renew_server
 				) 
 			);
 			
@@ -280,95 +247,6 @@ class ControllerBurroHosting extends Controller {
 		$jsonHosting['success'] = "OK!";
 		$this->response->setOutput(json_encode($jsonHosting));
 		
-		
-		/*
-		$this->language->load('checkout/cart');
-		
-		
-		if (isset($this->request->post['product_id'])) {
-			$product_id = $this->request->post['product_id'];
-		} else {
-			$product_id = 0;
-		}
-		
-		$this->load->model('catalog/product');
-						
-		$product_info = $this->model_catalog_product->getProduct($product_id);
-		
-		if ($product_info) {			
-			if (isset($this->request->post['quantity'])) {
-				$quantity = $this->request->post['quantity'];
-			} else {
-				$quantity = 1;
-			}
-														
-			if (isset($this->request->post['option'])) {
-				$option = array_filter($this->request->post['option']);
-			} else {
-				$option = array();	
-			}
-			
-			$product_options = $this->model_catalog_product->getProductOptions($this->request->post['product_id']);
-			
-			foreach ($product_options as $product_option) {
-				if ($product_option['required'] && empty($option[$product_option['product_option_id']])) {
-					$json['error']['option'][$product_option['product_option_id']] = sprintf($this->language->get('error_required'), $product_option['name']);
-				}
-			}
-			
-			if (!$json) {
-				$this->cart->add($this->request->post['product_id'], $quantity, $option);
-
-				$json['success'] = sprintf($this->language->get('text_success'), $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']), $product_info['name'], $this->url->link('checkout/cart'));
-				
-				unset($this->session->data['shipping_method']);
-				unset($this->session->data['shipping_methods']);
-				unset($this->session->data['payment_method']);
-				unset($this->session->data['payment_methods']);
-				
-				// Totals
-				$this->load->model('setting/extension');
-				
-				$total_data = array();					
-				$total = 0;
-				$taxes = $this->cart->getTaxes();
-				
-				// Display prices
-				if (($this->config->get('config_customer_price') && $this->customer->isLogged()) || !$this->config->get('config_customer_price')) {
-					$sort_order = array(); 
-					
-					$results = $this->model_setting_extension->getExtensions('total');
-					
-					foreach ($results as $key => $value) {
-						$sort_order[$key] = $this->config->get($value['code'] . '_sort_order');
-					}
-					
-					array_multisort($sort_order, SORT_ASC, $results);
-					
-					foreach ($results as $result) {
-						if ($this->config->get($result['code'] . '_status')) {
-							$this->load->model('total/' . $result['code']);
-				
-							$this->{'model_total_' . $result['code']}->getTotal($total_data, $total, $taxes);
-						}
-						
-						$sort_order = array(); 
-					  
-						foreach ($total_data as $key => $value) {
-							$sort_order[$key] = $value['sort_order'];
-						}
-			
-						array_multisort($sort_order, SORT_ASC, $total_data);			
-					}
-				}
-				
-				$json['total'] = sprintf($this->language->get('text_items'), $this->cart->countProducts() + (isset($this->session->data['vouchers']) ? count($this->session->data['vouchers']) : 0), $this->currency->format($total));
-			} else {
-				$json['redirect'] = str_replace('&amp;', '&', $this->url->link('product/product', 'product_id=' . $this->request->post['product_id']));
-			}
-		}
-		
-		*/
 	}
 	
 }

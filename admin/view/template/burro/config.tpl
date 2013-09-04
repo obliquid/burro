@@ -13,12 +13,14 @@
   <?php } ?>
   <div class="box">
     <div class="heading">
-      <h1><img src="view/image/product.png" alt="" /> <?php echo $heading_title; ?></h1>
+      <h1><img src="view/image/config.png" alt="" /> <?php echo $heading_title; ?></h1>
       
       <div class="buttons"></div>
     </div>
     <div class="content">
-      <p><i><?php echo $heading_subtitle; ?></i></p>
+      <p><i><?php echo $heading_subtitle; ?></i></p> 
+      <p><?php echo $database_message; ?></p> 
+      <p><?php echo $ispconfig_message; ?></p> 
     </div>
   </div>
 </div>

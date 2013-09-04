@@ -1,0 +1,34 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+	<!-- remove button "reorder" from order history page, cause is not compatible with hostings products -->
+	<file name="catalog/view/theme/*/template/account/order_list.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<a href="<?php echo $order['reorder']; ?>"><img src="catalog/view/theme/default/image/reorder.png" alt="<?php echo $button_reorder; ?>" title="<?php echo $button_reorder; ?>" /></a>]]></search>
+			<add><![CDATA[]]></add>
+		</operation>
+	</file>
+ 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+</modification>	
+
+

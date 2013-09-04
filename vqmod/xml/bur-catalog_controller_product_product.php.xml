@@ -19,11 +19,16 @@
 			$this->data['product_hostings'] = $this->model_burro_hosting->getProductHostings($product_id);
 			//search if between hostings, there is a domain service
 			$this->data['product_hostings_have_domain'] = $this->model_burro_hosting->productHostingsContainDomain($this->data['product_hostings']);
-			//search all domain services and mailboxes already activated for this user
-			$customer_id = $this->customer->isLogged();
+			//search all domain services and mailboxes and registrants already activated for this user
+			if ($this->customer->isLogged()) { 
+				$customer_id = $this->customer->getId();
+			} else {
+				$customer_id = false;
+			}
 			if ( $customer_id ) {
-				$this->data['avail_domains'] = $this->model_burro_hosting->getHostings(array('new','active'),array('domain'),0,$customer_id);
-				$this->log->writeVar($this->session->data['hostings']);
+				//get hostings
+				$this->data['avail_domains'] = $this->model_burro_hosting->getHostings(array('active'),array('domain'),0,$customer_id);
+				//$this->log->writeVar($this->session->data['hostings']);
 				$hostings_in_cart = $this->model_burro_hosting->getHostingsFromSessions();
 				foreach ( $hostings_in_cart as $hosting_in_cart ) {
 					if ( $hosting_in_cart["hosting_domain"] != "" && $hosting_in_cart["hosting_domain_extension"] != "" && $hosting_in_cart["hosting_domain_selected"] != "" ) {
@@ -31,9 +36,39 @@
 						array_unshift( $this->data['avail_domains'], array("domain"=>$hosting_in_cart["hosting_domain_selected"]) );
 					}
 				}
-				
-				
+				//get mailboxes
 				$this->data['avail_mailboxes'] = $this->model_burro_hosting->getMailboxes($customer_id);
+				
+				//get registrants already saved
+				$hostings_domain = $this->model_burro_hosting->getHostings(array(),array('domain'),0,$customer_id);  
+				//$this->log->writeVar($hostings_domain);
+				if ( count( $hostings_domain ) > 0 ) {
+					$registrants_company = array(); 
+					$registrants_company_hashes = array(); 
+					$registrants_person = array();  
+					$registrants_person_hashes = array();  
+					foreach ( $hostings_domain as $domain ) { 
+						$registrant_hash = hash("sha256",$domain['registrant']);  
+						$typeAndRegistrant = unserialize($domain['registrant']);  
+						$registrant_type = $typeAndRegistrant[0];  
+						$registrant_company = $typeAndRegistrant[1];  
+						$registrant_person = $typeAndRegistrant[2];  
+						if ( $registrant_type == 'company' ) {  
+							if ( !in_array($registrant_hash, $registrants_company_hashes) ) {
+								array_push($registrants_company, $registrant_company);  
+								array_push($registrants_company_hashes, $registrant_hash);  
+							}
+						} elseif ( $registrant_type == 'person' ) {  
+							if ( !in_array($registrant_hash, $registrants_person_hashes) ) {
+								array_push($registrants_person, $registrant_person);  
+								array_push($registrants_person_hashes, $registrant_hash);  
+							}
+						} 
+					} 
+					$this->data['registrants_company'] = $registrants_company; 
+					$this->data['registrants_person'] = $registrants_person;
+				}
+				
 			} else {
 				$this->data['avail_domains'] = array(  );
 				$this->data['avail_mailboxes'] = array(  );

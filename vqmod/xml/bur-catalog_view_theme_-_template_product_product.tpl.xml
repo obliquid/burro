@@ -27,7 +27,7 @@
       <?php 	foreach ( $product_hostings as $hosting ) { ?>
           <tr>
       <?php 		if ( isset( $hosting['service'] ) && $hosting['service']=="domain" ) { ?>
-            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Domain:&nbsp;&nbsp;&nbsp;&nbsp;www.</h3></td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Domain&nbsp;&nbsp;&nbsp;&nbsp;www.</h3></td>
       <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="webhosting" ) { ?>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Web Hosting</h3></td>
       <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="webhosting_space" ) { ?>
@@ -44,13 +44,16 @@
 	  
       <?php 		if ( isset( $hosting['service'] ) && $hosting['service']=="domain" ) { ?>
               <script>
-			  
+			
+			
+			//main function that check validity of the domain
 			function checkIt() {
 				
 				//init some vars
 				$('input[name="hosting_domain"]').val( sanitizeDomain( $('input[name="hosting_domain"]').val(), true) );
 				var domainRaw = $('input[name="hosting_domain"]').val();
 				var domainExt = $('select[name="hosting_domain_extension"]').val();
+				
 				
 				if (domainRaw != '' && domainRaw.length > 2) {
 					resetDom(true);
@@ -168,7 +171,11 @@
 					$('#button-cart').prop('disabled', true);
 				}
 			}
-				
+
+			//data and functions to manage saved registrants
+			var saved_registrants_company =  <?php if ( isset( $registrants_company ) ) { echo json_encode($registrants_company); } else { echo "[]"; }?>;
+			var saved_registrants_person =  <?php if ( isset( $registrants_person ) ) { echo json_encode($registrants_person); } else { echo "[]"; }?>;
+
 			$(document).ready(function() {
 				//add domain form behaviours
 				$('input[name="hosting_domain"]').keyup(function(event) {
@@ -248,25 +255,65 @@
 						$("select[name='registrant_person_province']").prop('disabled', false);
 					}
 				});
-				/*
-				registrant_ragsoc
-				registrant_vat
-				registrant_type
-				registrant_address
-				registrant_city
-				registrant_zip
-				registrant_nation
-				registrant_province
-				registrant_phone
-				registrant_email
-				registrant_repr_name
-				registrant_repr_surname
-				registrant_repr_cf
-				registrant_repr_birthdate
-				registrant_repr_birthplace
-				registrant_repr_birthnation
-				registrant_repr_birthprovince
-				*/
+				
+				//add registrant form saved-menu behaviours
+				$("select[name='saved_registrants_person_menu']").change( function() {
+					var my_regist_idx = $("select[name='saved_registrants_person_menu']").val();
+					if ( my_regist_idx > -1 ) {
+						var person = saved_registrants_person[my_regist_idx];
+						$("input[name='registrant_person_address']").val(person.registrant_person_address);
+						$("input[name='registrant_person_birthdate']").val(person.registrant_person_birthdate);
+						$("select[name='registrant_person_birthnation']").val(person.registrant_person_birthnation);
+						$("input[name='registrant_person_birthplace']").val(person.registrant_person_birthplace);
+						$("select[name='registrant_person_birthprovince']").val(person.registrant_person_birthprovince);
+						if ( person.registrant_person_birthnation != "IT" ) {
+							$("select[name='registrant_person_birthprovince'] option[value='--']").attr("selected", "selected");
+						}
+						$("input[name='registrant_person_cf']").val(person.registrant_person_cf);
+						$("input[name='registrant_person_city']").val(person.registrant_person_city);
+						$("input[name='registrant_person_email']").val(person.registrant_person_email);
+						$("input[name='registrant_person_name']").val(person.registrant_person_name);
+						$("select[name='registrant_person_nation']").val(person.registrant_person_nation);
+						$("input[name='registrant_person_phone']").val(person.registrant_person_phone);
+						$("select[name='registrant_person_province']").val(person.registrant_person_province);
+						if ( person.registrant_person_nation != "IT" ) {
+							$("select[name='registrant_person_province'] option[value='--']").attr("selected", "selected");
+						}
+						$("input[name='registrant_person_surname']").val(person.registrant_person_surname);
+						$("input[name='registrant_person_zip']").val(person.registrant_person_zip);
+						validateRegistrant();
+					}
+				});
+				$("select[name='saved_registrants_company_menu']").change( function() {
+					var my_regist_idx = $("select[name='saved_registrants_company_menu']").val();
+					if ( my_regist_idx > -1 ) {
+						var company = saved_registrants_company[my_regist_idx];
+						$("input[name='registrant_company_address']").val(company.registrant_company_address);
+						$("input[name='registrant_company_city']").val(company.registrant_company_city);
+						$("input[name='registrant_company_email']").val(company.registrant_company_email);
+						$("select[name='registrant_company_nation']").val(company.registrant_company_nation);
+						$("input[name='registrant_company_phone']").val(company.registrant_company_phone);
+						$("select[name='registrant_company_province']").val(company.registrant_company_province);
+						if ( company.registrant_company_nation != "IT" ) {
+							$("select[name='registrant_company_province'] option[value='--']").attr("selected", "selected");
+						}
+						$("input[name='registrant_company_ragsoc']").val(company.registrant_company_ragsoc);
+						$("input[name='registrant_company_repr_birthdate']").val(company.registrant_company_repr_birthdate);
+						$("select[name='registrant_company_repr_birthnation']").val(company.registrant_company_repr_birthnation);
+						$("input[name='registrant_company_repr_birthplace']").val(company.registrant_company_repr_birthplace);
+						$("select[name='registrant_company_repr_birthprovince']").val(company.registrant_company_repr_birthprovince);
+						if ( company.registrant_company_repr_birthnation != "IT" ) {
+							$("select[name='registrant_company_repr_birthprovince'] option[value='--']").attr("selected", "selected");
+						}
+						$("input[name='registrant_company_repr_cf']").val(company.registrant_company_repr_cf);
+						$("input[name='registrant_company_repr_name']").val(company.registrant_company_repr_name);
+						$("input[name='registrant_company_repr_surname']").val(company.registrant_company_repr_surname);
+						$("select[name='registrant_company_type']").val(company.registrant_company_type);
+						$("input[name='registrant_company_vat']").val(company.registrant_company_vat);
+						$("input[name='registrant_company_zip']").val(company.registrant_company_zip);
+						validateRegistrant();
+					}
+				});
 				
 				//kickstart the form
 				resetDom();
@@ -309,6 +356,19 @@
             </td>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+      <?php 		} elseif ( $hosting['service']=="mailbox" && !$product_hostings_have_domain ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
+      <?php 			if ( !(count( $avail_domains ) > 0) ) {  ?>
+            <script>
+			$(document).ready(function() {
+				$('#button-cart').prop('disabled', true);
+			});
+            </script>
+              <span class="hosting-error">first you must add to cart a domain, then you'll be able to add services to that domain.</span>	  
+      <?php 			}  ?>
+            </td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">&nbsp;</td>
       <?php 		} elseif ( $hosting['service']=="mailbox_space" ) { ?>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
       <?php 			if ( count( $avail_mailboxes ) > 0 ) {  ?>
@@ -334,12 +394,15 @@
               <h3 style='margin:0px;'><?php echo $hosting['size']; ?></h3><h5 style='margin:0px;line-height: 10px;'>GBytes&nbsp;&nbsp;</h5><input type="hidden" name="hosting_size" value="<?php echo $hosting['size']; ?>"/>
              <?php 	}  ?>
             </td>
-            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;<?php 	if ( (int)$hosting['quantity'] > 0 ) {  ?>background-color: #f7f7f7; <?php 	}  ?>">
-             <?php 	if ( (int)$hosting['quantity'] > 0 ) {  ?>
-              <h3 style='margin:0px;'><?php echo $hosting['quantity']; ?></h3><h5 style='margin:0px;line-height: 10px;'>qty&nbsp;&nbsp;</h5><input type="hidden" name="hosting_quantity" value="<?php echo $hosting['quantity']; ?>"/>
-             <?php 	}  ?>
-            </td>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;background-color: #f7f7f7;"><h3 style='margin:0px;'><?php echo $hosting['duration']; ?></h3><h5 style='margin:0px;line-height: 10px;'>months&nbsp;&nbsp;</h5><input type="hidden" name="hosting_duration" value="<?php echo $hosting['duration']; ?>"/></td>
+             <?php 	if ( isset( $hosting['quantity'] ) && (int)$hosting['quantity'] > 0 ) {  ?>
+             <?php 		$hosting_quantity = (int)$hosting['quantity'];  ?>
+             <?php 	} else {  ?>
+             <?php 		$hosting_quantity = 1;  ?>
+             <?php 	}  ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;background-color: #f7f7f7;">
+              <h3 style='margin:0px;'><?php echo $hosting_quantity; ?></h3><h5 style='margin:0px;line-height: 10px;'>qty&nbsp;&nbsp;</h5><input type="hidden" name="hosting_quantity" value="<?php echo $hosting_quantity; ?>"/>
+            </td>
           </tr>
       <?php 		if ( isset( $hosting['service'] ) && $hosting['service']=="domain" ) { ?>
           <tr id="registrant_box" style="display:none;">
@@ -358,7 +421,19 @@
 			<table id="registrant_box_company" style="display:none;">
 				<tr><td>&nbsp;</td></tr>
 				<tr>
-					<td  colspan="2" style="border-top: 1px solid #E7E7E7;"><h3>Company:</h3></td>
+					<td  style="border-top: 1px solid #E7E7E7;"><h3>Company:</h3></td>
+					<td  style="border-top: 1px solid #E7E7E7;text-align:right;"><small>Select from saved:</small>
+						<select name='saved_registrants_company_menu'>
+							<option value="-1">-</option>
+				<?php 	if ( isset($registrants_company) && count( $registrants_company ) > 0 ) {  ?> 
+				<?php 		$counter = 0;  ?>
+				<?php 		foreach ( $registrants_company as $record ) { ?>
+							<option value="<?php echo $counter; ?>"><?php echo substr ($record["registrant_company_ragsoc"],0,50); ?></option>
+						<?php 		$counter++;  ?>
+				<?php 		} ?> 
+				<?php 	}  ?>
+						</select>
+					</td>
 				</tr>
 				<tr >
 					<td style="width:150px;">Company Name</td>
@@ -958,7 +1033,19 @@
 			<table id="registrant_box_person" style="display:none;">
 				<tr><td>&nbsp;</td></tr>
 				<tr>
-					<td  colspan="2" style="border-top: 1px solid #E7E7E7;"><h3>Person:</h3></td>
+					<td  style="border-top: 1px solid #E7E7E7;"><h3>Person:</h3></td>
+					<td  style="border-top: 1px solid #E7E7E7;text-align:right;"><small>Select from saved:</small>
+						<select name='saved_registrants_person_menu'>
+							<option value="-1">-</option>
+				<?php 	if ( isset($registrants_person) && count( $registrants_person ) > 0 ) {  ?>
+				<?php 		$counter = 0;  ?>
+				<?php 		foreach ( $registrants_person as $record ) { ?>
+							<option value="<?php echo $counter; ?>"><?php echo substr ($record["registrant_person_name"]." ".$record["registrant_person_surname"],0,50); ?></option>
+						<?php 		$counter++;  ?>
+				<?php 		} ?> 
+				<?php 	}  ?>
+						</select>
+					</td>
 				</tr>
 				<tr >
 					<td >Name</td>

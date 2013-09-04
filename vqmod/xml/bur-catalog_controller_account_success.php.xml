@@ -1,0 +1,18 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################           ############################################################################# -->
+	<!-- ############################################################################################################################# -->
+	<!--  -->
+	<file name="catalog/controller/account/success.php">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[]]></search>
+			<add><![CDATA[]]></add>
+		</operation>
+	</file>
+</modification>

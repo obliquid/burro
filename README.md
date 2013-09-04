@@ -9,13 +9,13 @@
 
 [opencart](http://www.opencart.com/) is a leading open source ecommerce software, and [ispconfig](http://www.ispconfig.org/) is a leading open source hosting control panel software
 
-with *burro* your customers buy hosting services on your opencart shop, and these services are automatically created and activated on your ispconfig server. *burro* also sends automatic reminder emails to your customers when a service renewal is due, and (if you want) automatically disable not-renewed services.
+with *burro* your customers buy hosting services on your opencart shop, and these services are automatically created and activated on your ispconfig server. *burro* also sends automatic reminder emails to your customers when a service renewal is due, or when a paymend is expected.
 
 ---
 
 ### note
 
-*burro* is an ongoing project. right now only a minimal part of the functionalities have been implemented. come back later!
+*burro* is an ongoing project. this is an alpha version. come back later!
 
 ---
 
@@ -33,10 +33,12 @@ with *burro* your customers buy hosting services on your opencart shop, and thes
 ### installation and first use
 
 - first make sure you have *vqmod* installed!
-- then, simply copy (upload) *vqmod*, *catalog*, *image* and *admin* folders into your opencart installation, as usual. don't worry: no files will be overwritten.
+- insert your personal configurations in *admin/config_burro.php*
+- then, simply copy (upload) *vqmod*, *catalog*, *system*, *image* and *admin* folders into your opencart installation, as usual. don't worry: no files will be overwritten.
+	- after file upload, MUST set permissions 777 to folder *system/library/dompdf/lib/fonts*, with a command like: *chmod -R 777 system/library/dompdf/lib/fonts*
 - don't forget to go to *System > Users > User Groups*, edit *Top Administrators* group, and add *Access* and *Modify* permissions to the new *burro/\** and *module/domainCheck* checkboxes
-- now *burro* is installed, with its own menu: go to *Hostings > Configuration* and configure it.
-- for each product, in the editing form, you'll have a new tab *Hostings*: here you can set your product to be an hosting product, by adding to it one or more hosting services.
+- now *burro* is installed: go to the new menu *Hostings > Configuration* to trigger creation of burro specific database tables
+- for each product, in the editing form, you'll have a new tab *Hostings*: here you can define your product to be an hosting product, by adding to it one or more hosting services.
 	- note: right now it's not allowed to add to a product more than one service of each type.
 - note: if you use a custom theme (that is not the default theme or the bundled obliquid theme), then read troubleshootings below.
 
@@ -46,6 +48,7 @@ with *burro* your customers buy hosting services on your opencart shop, and thes
 
 - *burro* comes bundled with a custom minimalistic theme, named *obliquid theme*. using this theme is not necessary to correctly run *burro*, but if you like it, you can use it.
 - *burro* comes bundled with a Domain Check module, you can put it on your pages to let users do a realtime whois control for domain availability
+	- requires whois
 
 ---
 

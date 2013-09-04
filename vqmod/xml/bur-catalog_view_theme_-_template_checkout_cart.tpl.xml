@@ -7,7 +7,6 @@
 	
 	
 	
-	<!-- add Hosting section in product tpl -->
 	<file name="catalog/view/theme/*/template/checkout/cart.tpl">
 	
 		<!-- if it's an hosting product, disable quantity		-->
@@ -21,6 +20,48 @@
 		</operation>
 		
 	</file>
+	
+	<!-- add hostings visualization in cart tpl and in module cart tpl (the mini cart in header) -->
+	<file name="catalog/view/theme/*/template/checkout/cart.tpl,catalog/view/theme/*/template/module/cart.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php foreach ($product['option'] as $option) { ?>]]></search>
+			<add><![CDATA[
+                <?php foreach ($product['hostings'] as $hosting) { ?>
+                <?php 		if ( isset($hosting['hosting_renew_order_hosting_id']) && (int)$hosting['hosting_renew_order_hosting_id'] > 0 ) { ?>
+                <small>(renewal)</small><br />
+                <?php 		} ?>
+                <?php 		if ( isset($hosting['hosting_domain_selected']) && $hosting['hosting_domain_selected'] != "" ) { ?>
+                - <small>selected domain: <strong><?php echo $hosting['hosting_domain_selected']; ?></strong></small><br />
+                <?php 		} ?>
+                <?php 		if ( isset($hosting['hosting_mailbox_selected']) && $hosting['hosting_mailbox_selected'] != "" ) { ?>
+                - <small>selected mailbox: <strong><?php echo $hosting['hosting_mailbox_selected']; ?></strong></small><br />
+                <?php 		} ?>
+                <?php 		if ( isset($hosting['hosting_duration']) && (int)$hosting['hosting_duration'] > 0 ) { ?> 
+                - <small>global service duration: <strong><?php echo $hosting['hosting_duration']; ?> months</strong></small><br />
+                <?php 		} ?>
+                <?php 		if ( count( $hosting['hostings'] ) > 0 ) { ?>
+                - <small>product detail:</small><br />
+                <?php 			foreach ($hosting['hostings'] as $product_hosting) { ?>
+                <?php 				if ( isset( $product_hosting['quantity'] ) && (int)$product_hosting['quantity'] > 0 ) { ?>				
+                <?php 					$my_qty = (int)$product_hosting['quantity']; ?>				
+                <?php 				} else { ?>				
+                <?php 					$my_qty = 1; ?>				
+                <?php 				} ?>				
+                <?php 				if ( isset( $product_hosting['quantity'] ) && (int)$product_hosting['quantity'] > 0 ) $my_qty = (int)$product_hosting['quantity']; ?>				
+                <small><strong><?php echo $my_qty; ?></strong> X <strong><?php echo $product_hosting['service']; ?></strong>
+                <?php 				if ( isset( $product_hosting['duration'] ) && (int)$product_hosting['duration'] > 0 ) echo ", <strong>".$product_hosting['duration']."</strong> months"; ?>
+                <?php 				if ( isset( $product_hosting['size'] ) && (int)$product_hosting['size'] > 0 ) echo ", <strong>".$product_hosting['size']."</strong> GBytes"; ?>
+                </small><br />
+                <?php 			} ?>
+                <?php 		} ?>
+                <?php } ?>                
+                <?php foreach ($product['option'] as $option) { ?>]]></add>
+		</operation>
+	
+	</file>
+	
+	
+	
 	
 	
 </modification>

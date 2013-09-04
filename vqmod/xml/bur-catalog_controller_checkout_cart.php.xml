@@ -9,28 +9,27 @@
 	<!-- #####################################  CHECKOUT CONTROLLER  ################################################################# -->
 	<!-- ############################################################################################################################# -->
 	<file name="catalog/controller/checkout/cart.php">
-		<!-- redirect to product detail when hosting products (with hosting options) are added to cart -->
+		<!-- in the add() method, redirect to product detail when hosting products (with hosting options) are added to cart -->
 		<operation error="abort" >
 			<search position="replace"><![CDATA[$product_options = $this->model_catalog_product->getProductOptions($this->request->post['product_id']);]]></search>
 			<add><![CDATA[
-			//only redirect addToCart to product detail if I am not already in product detail
-			//$this->log->write("0");
-			//$this->log->writeVar($this->request->post);
-			//I am in the product detail if some POST vars are defined
-			//so if they aren't, I'm not the product detail page
-			if ( !isset($this->request->post["is_hosting"] ) ) {
-				//first see if my product is a hosting product
-				//$this->log->write("1");
+			
+			//first check if I'm renewing a hosting: in that case I don't want to redirect to product detail, I want to add directly product to cart
+			if ( isset($this->request->post["hosting_renew_order_hosting_id"] ) && (int)$this->request->post["hosting_renew_order_hosting_id"] > 0 ) {
+				//do nothing, no redirect will happens
+
+			} elseif ( !isset($this->request->post["is_hosting"] ) ) {
+				
+				//only redirect addToCart to product detail if I am not already in product detail
+				//I am in the product detail if some POST vars are defined
+				//so if they aren't, I'm not the product detail page
+				
+				//see if my product is a hosting product
 				$this->load->model('burro/hosting');
-				//$this->log->write("2");
 				$product_hostings = $this->model_burro_hosting->getProductHostings($this->request->post['product_id']);
-				//$this->log->writeVar($this->request->post['product_id']);
-				//$this->log->writeVar($product_hostings);
-				//search if between hostings, if there are some that require interaction from customer
+				//search if between hostings there are some that require interaction from customer
 				//note: right now only 'mailbox' service doesn't require user interaction
-				//$this->log->write("3");
 				foreach ( $product_hostings as $hosting ) {
-					//$this->log->write("4");
 					// no more special threatment for mailbox 
 					//if ( $hosting['service']!="mailbox" ) {
 						//$this->log->write("5!");
@@ -39,6 +38,7 @@
 				}
 				//$this->log->write("6");
 			} elseif ( isset($this->request->post["is_hosting"] ) && $this->request->post["is_hosting"] == "yes" ) {
+			
 				//if I'm in the product page, must validate hosting parameters
 				//first see if my product is a hosting product
 				$this->load->model('burro/hosting');

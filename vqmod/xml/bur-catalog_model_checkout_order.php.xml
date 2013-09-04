@@ -14,7 +14,7 @@
 				
 				//check for hosting services for this product
 				$this->load->model('burro/hosting');
-				$hostings = $this->model_burro_hosting->getHostings(array(),array(),(int)$product['order_id'],0,(int)$product['product_id']);
+				$hostings = $this->model_burro_hosting->getHostings(array(),array(),(int)$product['order_id'],0,(int)$product['product_id'],array(),true);
 			
 				$template->data['products'][] = array(
 					'hostings'     => $hostings,
@@ -27,14 +27,27 @@
 			<add><![CDATA[
 				//check for hosting services for this product
 				$this->load->model('burro/hosting');
-				$hostings = $this->model_burro_hosting->getHostings(array(),array(),(int)$product['order_id'],0,(int)$product['product_id']);
+				$hostings = $this->model_burro_hosting->getHostings(array(),array(),(int)$product['order_id'],0,(int)$product['product_id'],array(),true);
 				foreach ($hostings as $hosting) {
-					$text .= chr(9) . '-' . $hosting['service'] . ' ';
-					if ( (int)$hosting['quantity'] > 0 ) $text .=   ' qty: '.$hosting['quantity'];
-					if ( (int)$hosting['size'] > 0 ) $text .=  ' '.$hosting['size'].'GB';
-					if ( (int)$hosting['duration'] > 0 ) $text .=  ' '.$hosting['duration'].'Months';
-					if ( $hosting['domain'] != '' ) $text .=  ' '.$hosting['domain'];
-					if ( $hosting['hosting_email'] != '' ) $text .=  ' '.$hosting['hosting_email'];
+					if ( $hosting["renew_order_hosting_id"] > 0 ) $text .=  "(renew)\n";
+					if ( $hosting["domain"] != "" ) $text .=  "selected domain: ".$hosting["domain"]."\n";
+					if ( $hosting["hosting_email"] != "" ) $text .=  "selected mailbox: ".$hosting["hosting_email"]."\n";
+					foreach ($hosting["product_hostings"] as $product_hosting) {
+						if ( isset( $product_hosting["quantity"] ) && (int)$product_hosting["quantity"] > 0 ) {
+							$product_hosting_qty = (int)$product_hosting["quantity"];
+						} else {
+							$product_hosting_qty = 1;
+						}
+						$text .= chr(9).$product_hosting_qty." x ".$product_hosting["service"];
+						if ( isset( $product_hosting["size"] ) && (int)$product_hosting["size"] > 0 ) {
+							$text .= ", ".$product_hosting["size"]." GB";
+						}
+						if ( isset( $product_hosting["duration"] ) && (int)$product_hosting["duration"] > 0 ) {
+							$text .= ", ".$product_hosting["duration"]." months";
+						}
+						$text .= "\n";
+					}
+					$text .= "\n";
 					$text .= "\n";
 				}
 			

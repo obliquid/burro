@@ -9,19 +9,34 @@
 	<file name="catalog/view/theme/*/template/mail/order.tpl">
 		<operation error="abort" >
 			<search position="replace"><![CDATA[<?php foreach ($product['option'] as $option) { ?>]]></search>
-			<add><![CDATA[<?php foreach ($product['hostings'] as $hosting) { ?>
-          <br />
-          &nbsp;<small> - <?php 
-		  echo $hosting['service'].':';
-		  if ( (int)$hosting['quantity'] > 0 ) echo ' qty: '.$hosting['quantity'];
-		  if ( (int)$hosting['size'] > 0 ) echo ' '.$hosting['size'].'GB';
-		  if ( (int)$hosting['duration'] > 0 ) echo ' '.$hosting['duration'].'Months';
-		  if ( $hosting['domain'] != '' ) echo ' '.$hosting['domain'];
-		  if ( $hosting['hosting_email'] != '' ) echo ' '.$hosting['hosting_email'];
-		  
-		  ?></small>
-          <?php } ?>
-          <?php foreach ($product['option'] as $option) { ?>]]></add>
+			<add><![CDATA[<?php foreach ($product['hostings'] as $hosting) {  
+		   
+			if ( isset( $hosting["renew_order_hosting_id"] ) && $hosting["renew_order_hosting_id"] > 0 ) {
+				echo "<br /><small>(renew)</small>";
+			}
+			if ( isset( $hosting["domain"] ) && $hosting["domain"] != "" ) {
+				echo "<br /><small>selected domain: ".$hosting["domain"]."</small>";
+			}
+			if ( isset( $hosting["hosting_email"] ) && $hosting["hosting_email"] != "" ) {
+				echo "<br /><small>selected mailbox: ".$hosting["hosting_email"]."</small>";
+			}
+			foreach ($hosting['product_hostings'] as $product_hosting) {
+				if ( isset( $product_hosting["quantity"] ) && (int)$product_hosting["quantity"] > 0 ) {
+					$product_hosting_qty = (int)$product_hosting["quantity"];
+				} else {
+					$product_hosting_qty = 1;
+				}
+				echo "<br /><small>".$product_hosting_qty." x ".$product_hosting["service"];
+				if ( isset( $product_hosting["size"] ) && (int)$product_hosting["size"] > 0 ) {
+					echo ", ".$product_hosting["size"]." GB";
+				}
+				if ( isset( $product_hosting["duration"] ) && (int)$product_hosting["duration"] > 0 ) {
+					echo ", ".$product_hosting["duration"]." months";
+				}
+				echo "</small>";
+			}
+		   }  
+		   foreach ($product['option'] as $option) { ?>]]></add>
 		</operation>
 	</file>
  

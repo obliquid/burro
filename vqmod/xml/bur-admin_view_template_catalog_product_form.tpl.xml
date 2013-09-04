@@ -8,7 +8,7 @@
 	<!-- ############################################################################################################################# -->
 	<!-- #####################################  PRODUCT VIEW   ####################################################################### -->
 	<!-- ############################################################################################################################# -->
-	<!-- add Burro view to admin product template -->
+	<!-- add Hostings section to admin product template -->
 	<file name="admin/view/template/catalog/product_form.tpl">
 		<operation error="abort" >
 			<search position="replace"><![CDATA[<a href="#tab-design"><?php echo $tab_design; ?></a>]]></search>
@@ -22,9 +22,9 @@
               <tr>
                 <td class="left">Service:</td>
                 <td class="right">Duration (months):<br/><span class="help">Mandatory for all services.</span></td>
-                <td class="right">Size (GBytes):<br/><span class="help">Used only for services "Web Hosting", "Web Hosting Additional Space", "Web Hosting Additional Traffic" and "Mailbox Additional Space".</span></td>
-                <td class="right">Allowed domain extensions:<br/><span class="help">Used only for service "Domain Name".<br/>Multiple allowed, comma separated<br/>Ex.: it,com,net,org,info</span></td>
-                <td class="right">Quantity:<br/><span class="help">Used only for service "Mailbox".</span></td>
+                <td class="right">Size (GBytes):<br/><span class="help">Mandatory for services "Web Hosting", "Web Hosting Additional Space", "Web Hosting Additional Traffic", "Mailbox" and "Mailbox Additional Space".</span></td>
+                <td class="right">Allowed domain extensions:<br/><span class="help">Mandatory only for service "Domain Name".<br/>Multiple allowed, comma separated<br/>Ex.: it,com,net,org,info</span></td>
+                <td class="right">Quantity:<br/><span class="help">Mandatory for all services but "Domain Name" and "Web Hosting". If left at 0 will be interpreted as 1.</span></td>
                 <td></td>
               </tr>
             </thead>

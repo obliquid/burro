@@ -13,9 +13,10 @@
 			<search position="replace"><![CDATA[<li id="help">]]></search>
 			<add><![CDATA[<li id="hosting"><a class="top">Hostings</a>
         <ul>
+          <li><a href="<? echo $this->url->link('burro/hosting', 'token=' . $this->session->data['token'], 'SSL'); ?>">Services</a></li>
+          <li><a href="<? echo $this->url->link('burro/task', 'token=' . $this->session->data['token'], 'SSL'); ?>">Tasks</a></li>
+          <li><a href="<? echo $this->url->link('burro/mailing', 'token=' . $this->session->data['token'], 'SSL'); ?>">Mailing</a></li>
           <li><a href="<? echo $this->url->link('burro/config', 'token=' . $this->session->data['token'], 'SSL'); ?>">Configuration</a></li>
-          <li><a href="<? echo $this->url->link('burro/hosting
-		  ', 'token=' . $this->session->data['token'], 'SSL'); ?>">Services</a></li>
           <li><a href="<? echo $this->url->link('burro/home', 'token=' . $this->session->data['token'], 'SSL'); ?>">About burro</a></li>
         </ul>
       </li>

@@ -1,0 +1,156 @@
+<modification>
+	<id>Invoice to PDF</id>
+	<version>1.21.154</version>
+	<vqmver>1.00</vqmver>
+	<author>CGSmith.net, LLC - http://www.cgsmith.net/</author>
+	<file name="admin/language/english/english.php">
+		<operation error="abort" >
+			<search position="after"><![CDATA[// Button]]></search>
+			<add><![CDATA[$_['button_pdf_invoice']	= 'Download PDF Invoice';
+			$_['button_sendemail_invoice']	= 'Email PDF Invoice';]]></add>
+		</operation>
+	</file>
+	<file name="admin/view/template/sale/order_invoice.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<div style="page-break-after: always;">]]></search>
+			<add><![CDATA[]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<h1><?php echo $text_invoice; ?></h1>]]></search>
+			<add><![CDATA[<h1><?php echo strtolower($text_invoice); ?> / <?php echo $order['invoice_no']; ?> </h1>]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[foreach ($orders as $order) { ?>]]></search>
+			<add><![CDATA[$iteration=1;
+			foreach ($orders as $order) { 
+			if ($iteration < count($orders)){?>
+<div style="page-break-after: always;">
+<?php }else{?>
+<div>
+<?php }?>
+<?php $iteration++;?>]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php foreach ($product['option'] as $option) { ?>]]></search>
+			<add><![CDATA[
+			<?php //$this->log->writeVar( $product ); ?>
+			<?php foreach ($product['hostings'] as $hosting) {
+				
+				if ( isset( $hosting["renew_order_hosting_id"] ) && $hosting["renew_order_hosting_id"] > 0 ) {
+					echo "<br /><small>(renew)</small>";
+				}
+				if ( isset( $hosting["domain"] ) && $hosting["domain"] != "" ) {
+					echo "<br /><small>selected domain: ".$hosting["domain"]."</small>";
+				}
+				if ( isset( $hosting["hosting_email"] ) && $hosting["hosting_email"] != "" ) {
+					echo "<br /><small>selected mailbox: ".$hosting["hosting_email"]."</small>";
+				}
+				foreach ($hosting['product_hostings'] as $product_hosting) {
+					if ( isset( $product_hosting["quantity"] ) && (int)$product_hosting["quantity"] > 0 ) {
+						$product_hosting_qty = (int)$product_hosting["quantity"];
+					} else {
+						$product_hosting_qty = 1;
+					}
+					echo "<br /><small>".$product_hosting_qty." x ".$product_hosting["service"];
+					if ( isset( $product_hosting["size"] ) && (int)$product_hosting["size"] > 0 ) {
+						echo ", ".$product_hosting["size"]." GB";
+					}
+					if ( isset( $product_hosting["duration"] ) && (int)$product_hosting["duration"] > 0 ) {
+						echo ", ".$product_hosting["duration"]." months";
+					}
+					echo "</small>";
+				}
+			
+			} ?>
+			
+			<?php foreach ($product['option'] as $option) { ?>]]></add>
+		</operation>
+	</file>
+	<file name="admin/view/template/sale/order_info.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<div class="buttons">]]></search>
+			<add><![CDATA[<div class="buttons"><a onclick="window.open('<?php echo $invoice; ?>&pdf=true&sendemail=true');" class="button"><?php echo $button_sendemail_invoice; ?></a><a onclick="window.open('<?php echo $invoice; ?>&pdf=true');" class="button"><?php echo $button_pdf_invoice; ?></a>]]></add>
+		</operation>
+	</file>
+	<file name="admin/view/template/sale/order_list.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<div class="buttons">]]></search>
+			<add><![CDATA[<div class="buttons"><a onclick="$('#form').attr('action', '<?php echo $invoice; ?>&pdf=true'); $('#form').attr('target', '_blank'); $('#form').submit();" class="button"><?php echo $button_pdf_invoice; ?></a>]]></add>
+		</operation>
+	</file>
+	<file name="admin/controller/sale/order.php">
+		<operation error="abort" >
+			<search position="after"><![CDATA[$this->language->get('button_invoice');]]></search>
+			<add><![CDATA[$this->data['button_pdf_invoice'] = $this->language->get('button_pdf_invoice');
+			$this->data['button_sendemail_invoice'] = $this->language->get('button_sendemail_invoice');]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="after"><![CDATA[invoice() {]]></search>
+			<add><![CDATA[$pdf = false;
+			$sendemail = false;]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace" offset="7"><![CDATA[$orders = array();]]></search>
+			<add><![CDATA[$orders = array();
+if (isset($this->request->post['selected'])) {
+	$orders = $this->request->post['selected'];
+	$pdf = (isset($this->request->get['pdf'])) ? true : false;
+	$sendemail = (isset($this->request->get['sendemail'])) ? true : false;
+} elseif (isset($this->request->get['order_id'])) {
+	$orders[] = $this->request->get['order_id'];
+	$pdf = (isset($this->request->get['pdf'])) ? true : false;
+	$sendemail = (isset($this->request->get['sendemail'])) ? true : false;
+}]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace" offset="2"><![CDATA[$this->template = 'sale/order_invoice.tpl';]]></search>
+			<add><![CDATA[$this->template = 'sale/order_invoice.tpl';
+if ($pdf){
+	if ($sendemail ) {
+		//siccome le mail si possono mandare solo da dentro la view di un ordine, mi aspetto sempre e solo 1 ordine in input (non un array)
+		$order = $this->data['orders'][0];
+		//$this->log->write("son qua, e devo salvare il file su disco, e mandare mail con il file allegato");
+		//$this->log->write("this->data['orders']:");
+		//$this->log->writeVar($order);
+		//call pdf() telling to also save pdf to disk
+		$this->response->setOutput( pdf($this->render(),$this->data['orders'],true) );
+		//$this->log->write("nonostante l'output sono ancora qui!?!?!?!");
+		//now pdf should be saved with filename:
+		$invoice_dir = "invoice/";
+		$pdf_filename = $order['invoice_no'].'_ord-'.$order['order_id'].".pdf";
+		//$this->log->write("now try to send a mail with this file attached: ".$pdf_filename);
+		//prepare email to customer
+		$this->load->model('burro/mailing'); 
+		$subject = $this->config->get("config_name")." - invoice ".$pdf_filename;
+		$message = "Dear Customer, attached to this email there is your invoice in pdf format: ".$pdf_filename."<br/><br/><hr/><br/><br/> Gentile Cliente, allegata a questa email trova la sua fattura in formato pdf: ".$pdf_filename;		
+		//send email to customer, with attached invoice
+		$this->model_burro_mailing->sendMail($order['email'],$subject,$message,array( array( "fullpath"=>$invoice_dir.$pdf_filename, "filename"=>$pdf_filename ) ));  
+	} else {
+		$this->response->setOutput( pdf($this->render(),$this->data['orders']) );
+	}
+}else{
+	$this->response->setOutput($this->render());
+}]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$product_data[] = array(]]></search>
+			<add><![CDATA[
+			
+				$this->load->model('burro/hosting');
+				$hostings = $this->model_burro_hosting->getHostings(array(),array(),$order_id,0,$product['product_id'],array(),true);
+				$product_data[] = array(
+					'hostings'	         => $hostings, 
+			]]></add>
+		</operation>
+	</file>
+	<file name="system/startup.php">
+		<operation error="abort" >
+			<search position="after"><![CDATA['helper/utf8.php');]]></search>
+			<add><![CDATA[require_once(DIR_SYSTEM . 'helper/pdf.php'); ]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="after"><![CDATA['library/template.php');]]></search>
+			<add><![CDATA[require_once(DIR_SYSTEM . 'library/dompdf/dompdf_config.inc.php');]]></add>
+		</operation>
+	</file>
+</modification>

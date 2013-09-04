@@ -1,0 +1,27 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	
+	<!-- ############################################################################################################################# -->
+	<!-- #####################################           ############################################################################# -->
+	<!-- ############################################################################################################################# -->
+	<!-- when a new user registers, also create it in ispconfig server -->
+	<!-- this is done after opencart user registration has finished, just before redirecting to the success page -->
+	<file name="catalog/controller/account/register.php">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->redirect($this->url->link('account/success'));]]></search>
+			<add><![CDATA[
+	
+		//alsos create a task in db for user creation
+		$this->load->model('burro/task');
+		$this->model_burro_task->newTask("customer",$this->request->post);
+		//$this->log->write("user created before success redirection!!!");
+	
+	
+		$this->redirect($this->url->link('account/success'));]]></add>
+		</operation>
+	</file>
+</modification>
