@@ -1,0 +1,24 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+	
+	<!-- add price per month -->
+	<file name="catalog/view/theme/*/template/product/category.tpl">
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php if (!$product['special']) { ?>]]></search> 
+			<add><![CDATA[
+			<div class="priceMonth"><?php echo $product['monthlyPrice']; ?><span class="priceMonthDida">&nbsp;<?php echo $product['monthlyLabel']; ?></span></div>
+			<?php if (!$product['special']) { ?>]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php if ($product['tax']) { ?>]]></search>
+			<add><![CDATA[
+			<span class="productPriceMonthDida"><?php echo $product['totLabel']; ?></span> 
+			<?php if ($product['tax']) { ?>]]></add>
+		</operation>
+	</file>
+	
+	
+</modification>

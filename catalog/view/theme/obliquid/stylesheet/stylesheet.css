@@ -54,7 +54,7 @@ form {
 	display: inline;
 }
 input[type='text'], input[type='password'], textarea {
-	background: #FEFFD8;
+	background: #e0e37e;
 	border: 0px;
 	border-bottom: 1px solid #848900;
 	padding: 3px;
@@ -97,7 +97,7 @@ label {
 /* header */
 #header {
 	height: 90px;
-	margin-bottom: 7px;
+	margin-bottom: 20px;
 	padding-bottom: 4px;
 	position: relative;
 	z-index: 99;
@@ -200,6 +200,9 @@ label {
 	box-shadow: 0px 2px 2px #DDDDDD;
 	*/
 	background: #FFF;
+}
+#header {
+	z-index: 300; /* per stare sopra a scalogno */
 }
 #header #cart.active .heading {
 	margin-top: 5px;
@@ -476,14 +479,14 @@ label {
 	cursor: pointer;
 }
 .required {
-	color: #FF0000;
+	color: #e64c00;
 	font-weight: bold;
 }
 .product-info .hosting-error,
 .hosting-error,
 .error {
 	display: block;
-	color: #FF0000;
+	color: #e64c00;
 }
 .help {
 	color: #999;
@@ -512,12 +515,12 @@ input.large-field, select.large-field {
 table.list {
 	border-collapse: collapse;
 	width: 100%;
-	border-top: 1px solid #DDDDDD;
-	border-left: 1px solid #DDDDDD;
+	/* border-top: 1px solid #DDDDDD;
+	border-left: 1px solid #DDDDDD; */
 	margin-bottom: 20px;
 }
 table.list td {
-	border-right: 1px solid #DDDDDD;
+	/* border-right: 1px solid #DDDDDD; */
 	border-bottom: 1px solid #DDDDDD;
 }
 table.list thead td {
@@ -743,7 +746,7 @@ a.button:hover, input.button:hover {
 }
 .box-product .image {
 	display: block;
-	margin-bottom: 0px;
+	margin-bottom: 5px;
 }
 .box-product .image img {
 	/*
@@ -765,7 +768,7 @@ a.button:hover, input.button:hover {
 	margin-bottom: 4px;
 }
 .box-product .price-old {
-	color: #F00;
+	color: #e64c00;
 	text-decoration: line-through;
 }
 .box-product .price-new {
@@ -852,6 +855,7 @@ ul.box-filter > li ul {
 	margin-bottom: 20px;
 }
 .category-info .image {
+	display: none;
 	float: left;
 	padding: 5px;
 	margin-right: 15px;
@@ -970,7 +974,7 @@ ul.box-filter > li ul {
 	font-size: 12px;
 }
 .product-list .price-old {
-	color: #F00;
+	color: #e64c00;
 	text-decoration: line-through;
 }
 .product-list .price-new {
@@ -1017,7 +1021,7 @@ ul.box-filter > li ul {
 }
 .product-grid .image {
 	display: block;
-	margin-bottom: 0px;
+	margin-bottom: 5px;
 }
 .product-grid .image img {
 	/*
@@ -1046,7 +1050,7 @@ ul.box-filter > li ul {
 	margin-bottom: 4px;
 }
 .product-grid .price-old {
-	color: #F00;
+	color: #e64c00;
 	text-decoration: line-through;
 }
 .product-grid .price-new {
@@ -1132,15 +1136,15 @@ ul.box-filter > li ul {
 }
 .product-info .price {
 	/* overflow: auto; */
-	border-bottom: 1px solid #E7E7E7;
+	/* border-bottom: 1px solid #E7E7E7; */
 	padding: 0px 5px 10px 5px;
 	margin-bottom: 10px;
-	font-size: 20px;
+	font-size: 16px;
 	font-weight: bold;
 	color: #333333;
 }
 .product-info .price-old {
-	color: #F00;
+	color: #e64c00;
 	text-decoration: line-through;
 }
 .product-info .price-new {
@@ -1302,7 +1306,7 @@ ul.box-filter > li ul {
 }
 .compare-info .price-old {
 	font-weight: bold;
-	color: #F00;
+	color: #e64c00;
 	text-decoration: line-through;
 }
 .compare-info .price-new {
@@ -1352,7 +1356,7 @@ ul.box-filter > li ul {
 	text-align: right;
 }
 .wishlist-info tbody .price s {
-	color: #F00;
+	color: #e64c00;
 }
 .wishlist-info tbody .action img {
 	cursor: pointer;
@@ -1555,7 +1559,7 @@ ul.box-filter > li ul {
 	text-align: right;
 }
 .cart-info tbody span.stock {
-	color: #F00;
+	color: #e64c00;
 	font-weight: bold;
 }
 .cart-module > div {
@@ -1667,7 +1671,9 @@ ul.box-filter > li ul {
 	width: 48%;
 }
 /* footer */ 
-#footer {
+#footer,
+#obli_footer
+{
 	clear: both;
 	overflow: auto;
 	min-height: 100px;
@@ -1677,6 +1683,10 @@ ul.box-filter > li ul {
 	border-bottom: 1px solid #DBDEE1;
 	background: #F8F8F8;
 	*/
+}
+#obli_footer
+{
+	min-height: 0px;
 }
 #footer h3 {
 	color: #000000;
@@ -1750,3 +1760,169 @@ ul.box-filter > li ul {
 	padding-top: 10px;
 	margin-top: 10px;
 }
+
+#paypalImg
+{
+	width:300px;
+	height:165px;
+	background: transparent url('../../../../../image/data/obliquid/paypal_img.jpg');
+}
+
+.product-info .priceMonth
+{
+	font-size: 24px;
+	line-height: 30px;
+}
+.priceMonth
+{
+	font-size: 18px;
+	font-weight: bold;
+	letter-spacing: -1px;
+	color: inherit;
+	margin-top:10px;
+}
+.priceMonthDida 
+{
+	font-size:10px;
+	font-weight:normal;
+	letter-spacing: 0px;
+	color:#333;
+}
+
+.domainCheckBody input
+{
+	width: 400px;
+	font-size: 18px;
+	font-weight: bold;
+	font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+	padding: 10px;
+}
+.domainCheckBody
+{
+	width:100%;
+	padding-top:20px;
+	padding-bottom:20px;
+	padding-left: 10px;
+	padding-right: 10px;
+	background-color: #f7f7f7;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* da qui ci sono anche in admin */
+.hostingImage
+{
+	float:left;
+	margin-right: 15px;
+}
+table.list td.filtersTdContainer,
+table.list td.controlsTdContainer,
+table.list td.timelineTdContainer 
+{
+	/* border-bottom:none; */
+	padding:0px;
+	margin:0px;
+}
+table.list td.filtersTdContainer
+{
+	padding: 7px;
+}
+.controlsContainer,
+.timelineContainer
+{
+	position:relative;
+	width: 100%;
+	height: 12px;
+	padding:0px;
+	margin:0px;
+	/*margin-bottom:20px;*/
+	background-color: #EFEFEF;
+}
+.controlsContainer 
+{
+	padding-top:4px;
+	padding-bottom:4px;
+}
+
+table.list thead td.filtersOptionsContainer {
+	font-weight:normal;
+	font-size: 11px;
+}
+
+#toggleNonTimeline
+{
+	margin-left:10px;
+}
+
+.timelineService,
+.timelineCursor
+{
+	position:absolute;
+	height: 100%;
+	padding:0px;
+	margin:0px;
+}
+.timelineService
+{
+	margin-top:3px;
+	margin-bottom:3px;
+	height: 6px;
+	background-color: #999;
+}
+.timelineCursor
+{
+	width: 6px;
+	height: 100%;
+	background-color: #000;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

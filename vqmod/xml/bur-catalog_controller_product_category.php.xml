@@ -1,0 +1,47 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+
+	<file name="catalog/controller/product/category.php">
+		<!-- ordino per prezzo by default -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$sort = 'p.sort_order';]]></search>
+			<add><![CDATA[$sort = 'p.price';]]></add>
+		</operation>
+		
+		
+		<!-- get monthly prices for products -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->data['products'][] = array(]]></search>
+			<add><![CDATA[
+			
+				//get monthly price
+				$this->load->model('burro/hosting');
+				$monthlyPrice = $this->model_burro_hosting->getProductMonthlyPrice($result['product_id']);  
+
+			
+				$this->data['products'][] = array(
+					'monthlyPrice' => $monthlyPrice["monthlyPrice"],
+					'monthlyLabel' => $monthlyPrice["monthlyLabel"], 
+					'totLabel' => $monthlyPrice["totLabel"], 
+					]]></add>
+		</operation>
+		
+		
+		
+	</file>
+
+
+
+
+</modification>	
+
+
+
+
+
+
+	

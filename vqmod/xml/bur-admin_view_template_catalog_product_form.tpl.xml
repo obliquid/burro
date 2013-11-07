@@ -39,6 +39,7 @@
                     <option value="webhosting_traffic" <?php if ( $product_hosting['service'] == 'webhosting_traffic' ) echo ' selected="selected" '; ?> >Web Hosting Additional Traffic</option>
                     <option value="mailbox" <?php if ( $product_hosting['service'] == 'mailbox' ) echo ' selected="selected" '; ?> >Mailbox</option>
                     <option value="mailbox_space" <?php if ( $product_hosting['service'] == 'mailbox_space' ) echo ' selected="selected" '; ?> >Mailbox Additional Space</option>
+                    <option value="custom_service" <?php if ( $product_hosting['service'] == 'custom_service' ) echo ' selected="selected" '; ?> >Custom Service</option>
                     <option value="database" <?php if ( $product_hosting['service'] == 'database' ) echo ' selected="selected" '; ?> >Database</option>
                   </select></td>
                 <td class="right"><input type="text" name="product_hosting[<?php echo $hosting_row; ?>][duration]" value="<?php echo $product_hosting['duration']; ?>" size="2" /></td>
@@ -73,6 +74,7 @@ function addHosting() {
     html += '      <option value="webhosting_traffic">Web Hosting Additional Traffic</option>';
     html += '      <option value="mailbox">Mailbox</option>';
     html += '      <option value="mailbox_space">Mailbox Additional Space</option>';
+    html += '      <option value="custom_service">Custom Service</option>';
     html += '      <option value="database">Database</option>';
     html += '    </select></td>';		
     html += '    <td class="right"><input type="text" name="product_hosting[' + hosting_row + '][duration]" value="" size="4" /></td>';

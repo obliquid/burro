@@ -36,6 +36,8 @@
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Mailboxes</h3></td>
       <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="mailbox_space" ) { ?>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Mailbox Additional Space</h3></td>
+      <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="custom_service" ) { ?>
+            <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Custom Service</h3></td>
       <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="database" ) { ?>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;"><h3>Database</h3></td>
       <?php 		} elseif ( isset( $hosting['service'] ) && $hosting['service']=="webhosting_traffic" ) { ?>
@@ -324,7 +326,7 @@
 			});
               </script>
             <td valign="top" style="border-top: 1px solid #E7E7E7;padding-top:10px;">
-              <input type="text" name="hosting_domain" value="<?php if ( isset( $this->request->get['preselected_domain'] ) ) echo $this->request->get['preselected_domain']; ?>" size="42" />
+              <input type="text" name="hosting_domain" value="<?php if ( isset( $this->request->get['preselected_domain'] ) ) echo $this->request->get['preselected_domain']; ?>" style="width:240px;" />
               <span class="hosting-error" id="hosting_domain_error" style="display:none;">Domain must be at least 3 chars long</span>
               <img src="catalog/view/theme/default/image/busy.svg" id="busy-domainCheck" style="display:none;position:relative;top:5px;width:20px;height:20px;"/>
               <div class="successDomain" id="hosting_domain_available" style="display:none;">Domain available</div>
@@ -422,7 +424,7 @@
 				<tr><td>&nbsp;</td></tr>
 				<tr>
 					<td  style="border-top: 1px solid #E7E7E7;"><h3>Company:</h3></td>
-					<td  style="border-top: 1px solid #E7E7E7;text-align:right;"><small>Select from saved:</small>
+					<td  style="border-top: 1px solid #E7E7E7;text-align:right;"><small>Already used:</small>
 						<select name='saved_registrants_company_menu'>
 							<option value="-1">-</option>
 				<?php 	if ( isset($registrants_company) && count( $registrants_company ) > 0 ) {  ?> 
@@ -500,6 +502,7 @@
 							<option value="SI">Slovenia</option>
 							<option value="ES">Spagna</option>
 							<option value="SE">Svezia</option>
+							<option value="CH">Svizzera</option>
 							<option value="HU">Ungheria</option>
 						</select>
 					</td>
@@ -1034,7 +1037,7 @@
 				<tr><td>&nbsp;</td></tr>
 				<tr>
 					<td  style="border-top: 1px solid #E7E7E7;"><h3>Person:</h3></td>
-					<td  style="border-top: 1px solid #E7E7E7;text-align:right;"><small>Select from saved:</small>
+					<td  style="border-top: 1px solid #E7E7E7;text-align:right;"><small>Already used:</small>
 						<select name='saved_registrants_person_menu'>
 							<option value="-1">-</option>
 				<?php 	if ( isset($registrants_person) && count( $registrants_person ) > 0 ) {  ?>
@@ -1488,6 +1491,7 @@
 							<option value="SI">Slovenia</option>
 							<option value="ES">Spagna</option>
 							<option value="SE">Svezia</option>
+							<option value="CH">Svizzera</option>
 							<option value="HU">Ungheria</option>
 						</select>
 					</td>
@@ -1639,6 +1643,12 @@
       <div class="cart">]]></add>
 		</operation>
 		
+		<!-- inhibit click on product images for zoom -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<div class="image"><a href="<?php echo $popup; ?>" title="<?php echo $heading_title; ?>" class="colorbox"><img src="<?php echo $thumb; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" id="image" /></a></div>]]></search>
+			<add><![CDATA[<div class="image"><img src="<?php echo $thumb; ?>" title="<?php echo $heading_title; ?>" alt="<?php echo $heading_title; ?>" id="image" /></div>]]></add>
+		</operation>
+
 		<!-- inhibit button-cart just after click -->
 		<operation error="abort" >
 			<search position="replace"><![CDATA[$('#button-cart').bind('click', function() {]]></search>
@@ -1691,6 +1701,56 @@
 			
 			]]></add>
 		</operation>
+		
+		<!-- do not visualize stocks -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<span><?php echo $text_stock; ?></span> <?php echo $stock; ?></div>]]></search>
+			<add><![CDATA[<!-- <span><?php echo $text_stock; ?></span> <?php echo $stock; ?> --></div>]]></add>
+		</operation>
+		
+		<!-- add price per month (questa sostituzione deve avvenire 2 volte, una volta per il prezzo del prodotto, e una volta per quello dei prodotti correlati -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<div class="price">]]></search>
+			<add><![CDATA[<div class="price">
+			<?php 
+				
+				if ( isset($product) && isset($product['price']) && $product['price'] != "" ) {
+					$isProductRelated = true;
+				} else {
+					$isProductRelated = false;
+				}
+				 
+				if ( $isProductRelated ) { ?>
+					<span class="priceMonth"> 
+						<?php echo $product['monthlyPrice']; ?>
+						<span class="priceMonthDida"><?php echo $product['monthlyLabel']; ?></span>
+					</span><br/>
+				<?php } else { ?>
+					<?php echo $text_price." "; ?>
+					<span class="priceMonth">
+						<?php echo $monthlyPrice; ?>
+						<span class="priceMonthDida"><?php echo $monthlyLabel; ?></span> 
+					</span><br/>
+				<?php 
+				}
+			
+			?>
+			]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php echo $text_price; ?>]]></search>
+			<add><![CDATA[<?php echo substr($text_price,0,-1); ?> tot.:]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php echo $price; ?>]]></search>
+			<add><![CDATA[<?php echo $price; ?><span class="priceMonthDida">&nbsp;<?php echo $totLabel; ?></span>]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php echo $product['price']; ?>]]></search>
+			<add><![CDATA[<?php echo $product['price']; ?><span class="priceMonthDida">&nbsp;<?php echo $product['totLabel']; ?></span>]]></add> 
+		</operation>
+		
+		
 		
 	</file>
 	

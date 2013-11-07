@@ -1,6 +1,8 @@
 <?php
 
 //BURRO SPECIFIC CONFIGURATION
+
+
 //list of available servers:
 //for each server add an associative array with its params
 $BURRO_SERVERS = array(
@@ -33,6 +35,7 @@ $BURRO_SERVERS = array(
 //when customers buy new services, this is the server where their services will be activated
 //even if you change this (for example because your previous server is running out of resources), all services sold till now will remain associated to their original server
 $BURRO_DEFAULT_SERVER_NAME = "myispconfigserver"; //must be the name of one of the BURRO_SERVERS above
+
 
 
 /*

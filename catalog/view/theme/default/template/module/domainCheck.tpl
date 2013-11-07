@@ -1,13 +1,13 @@
 <div id="domainCheck<?php echo $module; ?>" class="domainCheck box">
 	<div class="box-heading">Domain Check</div>
-	<table style="width:100%;margin-top:20px;">
+	<table class="domainCheckBody" > 
 		<tr>
-			<td valign="top" style=""><h3>Check if your domain is available!</h3></td>
-			<td valign="top" style="">
+			<td valign="middle" style=""><h3>Check if your domain is available!</h3></td>
+			<td valign="middle" style="">
 				<h3>www&nbsp;.</h3>
 			</td>
-			<td valign="top" style="width:260px;">
-				<input type="text" name="check_domain" size="40" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;font-size:14px;">
+			<td valign="middle" style="width:260px;">
+				<input type="text" name="check_domain" >
 				<span class="hosting-error" id="check_domain_error"></span>
 				<!-- <span class="help" style="width: 230px;">check if your domain is free!</span> -->
 				<script>
@@ -30,9 +30,22 @@
 				
 				
 					var whoisResult = '';
-					function checkIt() {
+					var alternativeDomainPageNum = 0;
+					var alternativeDomainPerPage = 10;
+					function checkIt(pageNum) {
+						if ( pageNum && typeof pageNum == "number" ) {
+							alternativeDomainPageNum = pageNum;
+						} else {
+							alternativeDomainPageNum = 0;
+						}
+						
 						//reset previous alternative domains
-						$('.alternativeDomain').remove();
+						$('#button-moreAlternatives').remove();
+						if ( alternativeDomainPageNum == 0 ) {
+							$('.alternativeDomain').remove();
+						}
+						
+						//reset buttons
 						$('#boxWhoisResult').hide();
 						$('#button-domainCheck').hide();
 						$('#busy-domainCheck').show();
@@ -56,8 +69,8 @@
 							},
 							dataType: 'json',
 							success: function(json) {
-								console.log("success!");
-								console.log(json);
+								//console.log("success!");
+								//console.log(json);
 								$('#button-domainCheck').show();
 								$('#busy-domainCheck').hide();
 								$('input[name="check_domain"]').prop('disabled', false);
@@ -81,9 +94,15 @@
 								//check for domain alternatives
 								var x = 0;
 								$(".allowed_domain_option").each(function() {
-									//first add child to view
 									var extension = $(this).val().split(',')[0]; 
-									if ( extension != domainExt ) {
+									if ( 
+										extension != domainExt
+										&&
+										x >= alternativeDomainPageNum*alternativeDomainPerPage 
+										&& 
+										x < (alternativeDomainPageNum+1)*alternativeDomainPerPage
+									) {
+										//first add child to view
 										var altDomainProdId = $(this).val().split(',')[1]; 
 										var fullDomain = domainRaw+'.'+extension;
 										var domId = 'alternativeNum'+String(x);
@@ -98,21 +117,21 @@
 											},
 											dataType: 'json',
 											success: function(jsonAlt) {
-												console.log("### passo 00: success on alternative domain!");
-												console.log(jsonAlt);
+												//console.log("### passo 00: success on alternative domain!");
+												//console.log(jsonAlt);
 												$('.'+domId).removeClass('attention');
 												$('#busy-domainCheck'+domId).remove();
 												if (jsonAlt[0] ) {
 													//alert("libero!: \n\n"+jsonAlt[1]);
-													console.log("### passo 01");
+													//console.log("### passo 01");
 													$('.'+domId).addClass('success');
-													console.log("### passo 02");
+													//console.log("### passo 02");
 													$('.'+domId).append(' - available');
-													console.log("### passo 03");
+													//console.log("### passo 03");
 													$('.'+domId).append('<a class="button" id="button-domainAdd'+domId+'" style="position:absolute;top:0px;right:-54px;">Buy</a>');
-													console.log("### passo 04 con "+$('#button-domainAdd'+domId).attr('href'));
+													//console.log("### passo 04 con "+$('#button-domainAdd'+domId).attr('href'));
 													$('#button-domainAdd'+domId).attr('href', 'index.php?route=product/product&product_id='+altDomainProdId+'&preselected_domain='+domainRaw+'&preselected_extension='+extension );
-													console.log("### passo 05 con "+$('#button-domainAdd'+domId).attr('href'));
+													//console.log("### passo 05 con "+$('#button-domainAdd'+domId).attr('href'));
 												} else {
 													//alert("occupato!: \n\n"+jsonAlt[1]);
 													$('.'+domId).addClass('warning');
@@ -124,9 +143,18 @@
 												console.log(jsonAlt);
 											}
 										});										
-										x++;
 									}
+									x++;
 								});
+								//add "more" button
+								if ( alternativeDomainPageNum < Math.floor( x / alternativeDomainPerPage ) ) {
+									$('.boxDomainAlternatives').append('<a class="button" id="button-moreAlternatives" style="">More</a>');
+									$('#button-moreAlternatives').click(function() {
+										checkIt(alternativeDomainPageNum+1);
+									});
+								} else {
+									$('.boxDomainAlternatives').append('<a href="index.php?route=information/contact" ><div class="successDomain" id="button-moreAlternatives" style="">Almost all TLDs are available for registration, even if not listed here! Contact us for quotations.<br/><i>Praticamente tutti i TLD sono disponibili per la registrazione, anche se non listati qui! Contattateci per quotazioni.</i></div></a>');
+								}
 							},
 							error: function(json) {
 								console.log("error calling index.php?route=burro/hosting/domainAvail");
@@ -174,17 +202,17 @@
 				
 				</script>
 			</td>
-			<td valign="top" style="width:10px;">
+			<td valign="middle" style="width:10px;">
 				<h3>&nbsp;.&nbsp;</h3>
 			</td>
-			<td valign="top" style="width:60px;">
+			<td valign="middle" style="width:60px;">
 				<select name="check_domain_extension">
 <?php 				foreach ( $allowed_domains as $allowed_domain ) { ?>
 						<option class="allowed_domain_option" value="<?php echo $allowed_domain['ext'].",".$allowed_domain['product_id']; ?>" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-weight:bold;font-size:14px;"><?php echo $allowed_domain['ext']; ?></option> 
 <?php 				} ?>
 				</select>
 			</td>
-			<td valign="top" style="width:80px;">
+			<td valign="middle" style="width:80px;">
 				<a class="button" id="button-domainCheck" >Check</a>
 				<img src="catalog/view/theme/default/image/busy.svg" id="busy-domainCheck" style="display:none;"/>
 			</td>
@@ -213,7 +241,7 @@
 			<td valign="top" style=""></td>
 			<td valign="top" colspan="4">
 				<div class="boxDomainAlternatives">
-					<h4>Alternative domains:</h4>
+					<h4>Alternative extensions:</h4>
 				</div>
 			</td>
 			<td valign="top">

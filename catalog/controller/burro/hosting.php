@@ -24,13 +24,13 @@ class ControllerBurroHosting extends Controller {
 			$domain = $domain_name.".".$domain_extension;
 			
 			//this version uses whois shell command
-			$whoisOutput = shell_exec('whois '.$domain);
+			$whoisOutput = utf8_encode( shell_exec('whois '.$domain) );
 			//$this->log->writeVar($whoisOutput);
 			
 			if
 			(
 				( 
-					(strpos($whoisOutput,'AVAILABLE') !== false)
+					(strpos($whoisOutput,'AVAILABLE') !== false && strpos($whoisOutput,'NOT AVAILABLE') === false)
 				)  
 				|| 
 				( 
@@ -46,7 +46,15 @@ class ControllerBurroHosting extends Controller {
 				)  
 				|| 
 				( 
-					(strpos($whoisOutput,'No match!!') !== false)
+					(strpos($whoisOutput,'nothing found') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'no match') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'No match') !== false)
 				)  
 				|| 
 				( 
@@ -58,11 +66,27 @@ class ControllerBurroHosting extends Controller {
 				)  
 				|| 
 				( 
-					(strpos($whoisOutput,'No entries found in the AFNIC Database') !== false)
+					(strpos($whoisOutput,'Domain Status: Available') !== false)
 				)  
 				|| 
 				( 
-					(strpos($whoisOutput,'no matching record') !== false)
+					(strpos($whoisOutput,'Domain status:         available') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'not found') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'Not found') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'No entries found') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'We do not have an entry in our database matching your query') !== false)
 				)  
 				|| 
 				( 
@@ -72,6 +96,22 @@ class ControllerBurroHosting extends Controller {
 				( 
 					(strpos($whoisOutput,'The domain has not been registered') !== false)
 				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'Object_Not_Found') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'Invalid query or domain name not known in Dot TK Domain Registry') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'No information available about domain name') !== false)
+				)  
+				|| 
+				( 
+					(strpos($whoisOutput,'is available for purchase') !== false)
+				)  
 			)
 			{ 
 				//domain is available!
@@ -80,7 +120,6 @@ class ControllerBurroHosting extends Controller {
 				//domain is registered!
 				$result = array( false, $whoisOutput );
 			}
-			
 		} 
 
 		$this->response->setOutput(json_encode($result));

@@ -53,7 +53,7 @@ class ModelBurroTask extends Model {
 		if ( isset( $this->request->get['show_services'] )  ) {
 			$show_services = explode(",",$this->request->get['show_services']);
 		} else {
-			$show_services = array("customer","domain","webhosting","webhosting_space","webhosting_traffic","mailbox","mailbox_space","database");
+			$show_services = array("customer","domain","webhosting","webhosting_space","webhosting_traffic","mailbox","mailbox_space","database","custom_service");
 		}
 		if ( isset( $this->request->get['show_servers'] )  ) {
 			$show_servers = explode(",",$this->request->get['show_servers']);
@@ -104,6 +104,7 @@ class ModelBurroTask extends Model {
 				if ( $('input[name=\"filter_service_webhosting_traffic\"]').is(':checked') ) show_services.push('webhosting_traffic');
 				if ( $('input[name=\"filter_service_mailbox\"]').is(':checked') ) show_services.push('mailbox');
 				if ( $('input[name=\"filter_service_mailbox_space\"]').is(':checked') ) show_services.push('mailbox_space');
+				if ( $('input[name=\"filter_service_custom_service\"]').is(':checked') ) show_services.push('custom_service');
 				if ( $('input[name=\"filter_service_database\"]').is(':checked') ) show_services.push('database');
 				
 				var show_servers = [];
@@ -166,6 +167,7 @@ class ModelBurroTask extends Model {
 				$('input[name=\"filter_service_webhosting_traffic\"]').change( reloadPage );
 				$('input[name=\"filter_service_mailbox\"]').change( reloadPage );
 				$('input[name=\"filter_service_mailbox_space\"]').change( reloadPage );
+				$('input[name=\"filter_service_custom_service\"]').change( reloadPage );
 				$('input[name=\"filter_service_database\"]').change( reloadPage );
 				$('input[name=\"filter_state_pending\"]').change( reloadPage );
 				$('input[name=\"filter_state_failed\"]').change( reloadPage );
@@ -281,6 +283,7 @@ class ModelBurroTask extends Model {
 		$view .= "<input type='checkbox' name='filter_service_webhosting_traffic'  />&nbsp;Webhostings&nbsp;Traffic&nbsp;&nbsp;&nbsp;&nbsp; ";
 		$view .= "<br/><input type='checkbox' name='filter_service_mailbox'  />&nbsp;Mailboxes&nbsp;&nbsp;&nbsp;&nbsp; ";
 		$view .= "<input type='checkbox' name='filter_service_mailbox_space'  />&nbsp;Mailboxes&nbsp;Space&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_service_custom_service'  />&nbsp;Custom&nbsp;Services&nbsp;&nbsp;&nbsp;&nbsp; ";
 		$view .= "<input type='checkbox' name='filter_service_database'  />&nbsp;Databases&nbsp;&nbsp;&nbsp;&nbsp; ";
 		$view .= "<input type='checkbox' name='filter_service_customer'  />&nbsp;Customers&nbsp;&nbsp;&nbsp;&nbsp; ";
 		$view .= "<br/>";
@@ -823,7 +826,7 @@ class ModelBurroTask extends Model {
 			$ispc_client["limit_web_domain"] = 1 + (int)$ispc_client["limit_web_domain"];
 			$ispc_client["limit_web_aliasdomain"] = 10 + (int)$ispc_client["limit_web_aliasdomain"];
 			$ispc_client["limit_web_quota"] = 1000*$object0->size + (int)$ispc_client["limit_web_quota"];
-			$ispc_client["limit_traffic_quota"] = 100000 + (int)$ispc_client["limit_traffic_quota"];
+			$ispc_client["limit_traffic_quota"] = 20000 + (int)$ispc_client["limit_traffic_quota"];
 			$ispc_client["limit_ftp_user"] = 1 + (int)$ispc_client["limit_ftp_user"];
 			$ispc_client["password"] = ""; //must be empty, so it's bypassed in update query and client keeps his original password
 			try {
@@ -840,7 +843,7 @@ class ModelBurroTask extends Model {
 						'parent_domain_id' => 0,
 						'vhost_type' => 'name',
 						'hd_quota' => 1000*$object0->size,
-						'traffic_quota' => 100000,
+						'traffic_quota' => 20000,
 						'cgi' => 'n',
 						'ssi' => 'n',
 						'suexec' => 'y',

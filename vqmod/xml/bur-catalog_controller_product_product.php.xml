@@ -5,14 +5,12 @@
 	<author>Federico Carrara</author>
 
 
-	<!-- ############################################################################################################################# -->
-	<!-- #####################################  PRODUCT CONTROLLER  ################################################################## -->
-	<!-- ############################################################################################################################# -->
-	<!-- add loading of hosting data in product controller -->
-	<file name="catalog/controller/product/product.php">
+	<file name="catalog/controller/product/product.php"> 
+		<!-- add loading of hosting data in product controller -->
+		<!-- and get monthly price for my product -->
 		<operation error="abort" >
-			<search position="replace"><![CDATA[if ($product_info) {]]></search>
-			<add><![CDATA[if ($product_info) {
+			<search position="replace"><![CDATA[if ($this->config->get('config_tax')) {]]></search>
+			<add><![CDATA[
 			
 			//first see if my product is a hosting product
 			$this->load->model('burro/hosting');
@@ -25,7 +23,15 @@
 			} else {
 				$customer_id = false;
 			}
+			
+			//get monthly price
+			$monthlyPrice = $this->model_burro_hosting->getProductMonthlyPrice($product_id);  
+			$this->data['monthlyPrice'] = $monthlyPrice["monthlyPrice"]; 
+			$this->data['monthlyLabel'] = $monthlyPrice["monthlyLabel"];  
+			$this->data['totLabel'] = $monthlyPrice["totLabel"];  
+
 			if ( $customer_id ) {
+
 				//get hostings
 				$this->data['avail_domains'] = $this->model_burro_hosting->getHostings(array('active'),array('domain'),0,$customer_id);
 				//$this->log->writeVar($this->session->data['hostings']);
@@ -74,7 +80,24 @@
 				$this->data['avail_mailboxes'] = array(  );
 			}
 			
-]]></add>
+			
+			if ($this->config->get('config_tax')) {]]></add>
+		</operation>
+
+		<!-- get monthly prices for related products -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[$this->data['products'][] = array(]]></search>
+			<add><![CDATA[
+			
+				//get monthly price
+				$monthlyPrice = $this->model_burro_hosting->getProductMonthlyPrice($result['product_id']);  
+
+			
+				$this->data['products'][] = array(
+					'monthlyPrice' => $monthlyPrice["monthlyPrice"],
+					'monthlyLabel' => $monthlyPrice["monthlyLabel"], 
+					'totLabel' => $monthlyPrice["totLabel"], 
+					]]></add>
 		</operation>
 	</file>
 

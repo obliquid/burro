@@ -1,0 +1,30 @@
+<modification>
+	<id>VQMOD - burro: opencart ispconfig integration</id>
+	<version>1.5.5.1</version>
+	<vqmver>2.3.2</vqmver>
+	<author>Federico Carrara</author>
+
+	<file name="admin/view/template/sale/order_invoice.tpl">
+		<!-- add logo to invoices -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<?php foreach ($orders as $order) { ?>]]></search>
+			<add><![CDATA[<img src='http://<?php echo $_SERVER["SERVER_NAME"]; ?>/image/data/logo.png' />
+	<?php foreach ($orders as $order) { ?>]]></add>
+		</operation>
+		<!-- remove shipping address from invoices (not needed by hostings) -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<td><?php echo $order['shipping_address']; ?></td>]]></search>
+			<add><![CDATA[<td style="display:none;"><?php echo $order['shipping_address']; ?></td>]]></add>
+		</operation>
+		<operation error="abort" >
+			<search position="replace"><![CDATA[<td width="50%"><b><?php echo $text_ship_to; ?></b></td>]]></search>
+			<add><![CDATA[<td style="display:none;" width="50%"><b><?php echo $text_ship_to; ?></b></td>]]></add>
+		</operation>
+	</file>
+	
+
+
+
+
+
+</modification>	

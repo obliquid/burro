@@ -4,11 +4,8 @@
 	<vqmver>2.3.2</vqmver>
 	<author>Federico Carrara</author>
 
-	<!-- ############################################################################################################################# -->
-	<!-- #####################################  COMMON VIEW   ######################################################################## -->
-	<!-- ############################################################################################################################# -->
-	<!-- add Burro section to main menu -->
 	<file name="admin/view/template/common/header.tpl">
+		<!-- add Burro section to main menu -->
 		<operation error="abort" >
 			<search position="replace"><![CDATA[<li id="help">]]></search>
 			<add><![CDATA[<li id="hosting"><a class="top">Hostings</a>
@@ -22,9 +19,94 @@
       </li>
       <li id="help">]]></add>
 		</operation>
-	</file>
 	
+		<!-- metto qui gli stili per admin specifici di burro perchè non riesco a modificare direttamente il file admin/view/stylesheet/stylesheet.css -->
+		<operation error="abort" >
+			<search position="replace"><![CDATA[</head>]]></search>
+			<add><![CDATA[
 
+<style>
+
+/* questo c'è anche in stylesheet.css del tema obliquid */
+.hostingImage
+{
+	float:left;
+	margin-right: 15px;
+}
+table.list td.filtersTdContainer,
+table.list td.controlsTdContainer,
+table.list td.timelineTdContainer 
+{
+	/* border-bottom:none; */
+	padding:0px;
+	margin:0px;
+}
+table.list td.filtersTdContainer
+{
+	padding: 7px;
+}
+.controlsContainer,
+.timelineContainer
+{
+	position:relative;
+	width: 100%;
+	height: 12px;
+	padding:0px;
+	margin:0px;
+	/*margin-bottom:20px;*/
+	background-color: #EFEFEF;
+}
+.controlsContainer 
+{
+	padding-top:4px;
+	padding-bottom:4px;
+}
+
+table.list thead td.filtersOptionsContainer {
+	font-weight:normal;
+	font-size: 11px;
+}
+
+#toggleNonTimeline
+{
+	margin-left:10px;
+}
+
+.timelineService,
+.timelineCursor
+{
+	position:absolute;
+	height: 100%;
+	padding:0px;
+	margin:0px;
+}
+.timelineService
+{
+	margin-top:3px;
+	margin-bottom:3px;
+	height: 6px;
+	background-color: #999;
+}
+.timelineCursor
+{
+	width: 6px;
+	height: 100%;
+	background-color: #000;
+}
+
+
+
+
+
+
+
+
+
+</style>			
+</head>]]></add>
+		</operation>
+	
+	</file>
 
 
 

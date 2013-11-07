@@ -1,7 +1,6 @@
 <?php
 class ModelBurroHosting extends Model {
 	
-	
 	/*
 	####################################################################################################################################################
 	####################################################################################################################################################
@@ -52,7 +51,7 @@ class ModelBurroHosting extends Model {
 			$augmented_records = array();
 			foreach ( $records as $record ) {
 				$record["product_hostings"] = $this->getProductHostings($record["order_product_id"]);
-				//also query to get product details (need the name, at leas)
+				//also query to get product details (need the name and image, at least)
 				$record["product_details"] = $this->model_catalog_product->getProduct($record["order_product_id"]);
 
 				
@@ -206,7 +205,7 @@ class ModelBurroHosting extends Model {
 	####################################################################################################################################################
 	####################################################################################################################################################
 	*/  
-	public function drawHostings($forAdmin = false, $customer_id) {  
+	public function drawHostings($forAdmin = false, $customer_id) {
 	
 		//differentiate include path
 		$curPath = getcwd();
@@ -231,7 +230,7 @@ class ModelBurroHosting extends Model {
 		if ( isset( $this->request->get['show_services'] )  ) {
 			$show_services = explode(",",$this->request->get['show_services']);
 		} else {
-			$show_services = array("domain","webhosting","webhosting_space","webhosting_traffic","mailbox","mailbox_space","database");
+			$show_services = array("domain","webhosting","webhosting_space","webhosting_traffic","mailbox","mailbox_space","database","custom_service");
 		}
 		if ( isset( $this->request->get['show_servers'] )  ) {
 			$show_servers = explode(",",$this->request->get['show_servers']);
@@ -269,6 +268,11 @@ class ModelBurroHosting extends Model {
 		
 		//some js
 		$view .= "<script>
+		
+			//global vars
+		
+			//global functions
+		
 			function reloadPage() {
 			
 				blockUI();
@@ -288,6 +292,7 @@ class ModelBurroHosting extends Model {
 				if ( $('input[name=\"filter_service_webhosting_traffic\"]').is(':checked') ) show_services.push('webhosting_traffic');
 				if ( $('input[name=\"filter_service_mailbox\"]').is(':checked') ) show_services.push('mailbox');
 				if ( $('input[name=\"filter_service_mailbox_space\"]').is(':checked') ) show_services.push('mailbox_space');
+				if ( $('input[name=\"filter_service_custom_service\"]').is(':checked') ) show_services.push('custom_service');
 				if ( $('input[name=\"filter_service_database\"]').is(':checked') ) show_services.push('database');
 				
 				var show_servers = [];
@@ -328,6 +333,38 @@ class ModelBurroHosting extends Model {
 				$('body').prepend('<div style=\"position:fixed;z-index:10000;background-image:url(view/image/nero50perc.png);width:100%;height:100%;\"></div>');
 			}
 			
+			function drawHostingTimeline(id, date_start, date_end, state, date_min, date_max, bg_color) {
+				//vars
+				
+				var now = new Date().getTime();
+				var start = new Date(Date.parse(date_start.substr(0,10))).getTime();
+				var end = new Date(Date.parse(date_end.substr(0,10))).getTime();
+				var max = new Date(Date.parse(date_max.substr(0,10))).getTime();
+				var min = new Date(Date.parse(date_min.substr(0,10))).getTime();
+				
+				var delta = end - start;
+				var offset = start - min;
+				var totalDelta = max - min;
+				var timelineWidth = $('#timelineContainer'+id).width();
+				var pixelPerSeconds = timelineWidth / totalDelta;
+				var width = Math.round( delta * pixelPerSeconds );
+				var x = Math.round( offset * pixelPerSeconds );
+				var xNow = Math.round( ( now - min ) * pixelPerSeconds );
+				//console.log('drawHostingTimeline: id = '+id+', width = '+timelineWidth+', start = '+start+', end = '+end+', date_start = '+date_start+', date_end = '+date_end+', state = '+state+', date_min = '+date_min+', date_max = '+date_max);
+				//modify timeline
+				$('#timelineService'+id).width( width );
+				$('#timelineService'+id).css( 'left',String(x)+'px' );
+				$('#timelineService'+id).css( 'background-color',bg_color );
+				$('#timelineCursor'+id).css( 'left',String(xNow)+'px' );
+	
+				/*
+				//some behaviour to each row
+				$( '#timelineService'+id ).closest('tr').next().mouseover(function() {
+					$(this).addClass('');
+				});	
+				*/
+			} 
+			
 			$(document).ready(function() { 
 				//define wich filter is checked by default
 				";
@@ -349,6 +386,7 @@ class ModelBurroHosting extends Model {
 				$('input[name=\"filter_service_webhosting_traffic\"]').change( reloadPage );
 				$('input[name=\"filter_service_mailbox\"]').change( reloadPage );
 				$('input[name=\"filter_service_mailbox_space\"]').change( reloadPage );
+				$('input[name=\"filter_service_custom_service\"]').change( reloadPage );
 				$('input[name=\"filter_service_database\"]').change( reloadPage );
 				$('input[name=\"filter_state_new\"]').change( reloadPage );
 				$('input[name=\"filter_state_active\"]').change( reloadPage );
@@ -454,47 +492,66 @@ class ModelBurroHosting extends Model {
 			});
 		</script>";
 		
-		//on top put filters
-		$view .= "<table>";
-		$view .= "<tr>";
-		$view .= "<td valign='top'>Filter&nbsp;by&nbsp;Service:&nbsp;</td><td>";
-		$view .= "<input type='checkbox' name='filter_service_domain'  />&nbsp;Domains&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_service_webhosting'  />&nbsp;Webhostings&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_service_webhosting_space'  />&nbsp;Webhostings&nbsp;Space&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_service_webhosting_traffic'  />&nbsp;Webhostings&nbsp;Traffic&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<br/><input type='checkbox' name='filter_service_mailbox'  />&nbsp;Mailboxes&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_service_mailbox_space'  />&nbsp;Mailboxes&nbsp;Space&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_service_database'  />&nbsp;Databases&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<br/>";
-		$view .= "<br/>";
-		$view .= "</td></tr>";
-		$view .= "<tr>";
-		$view .= "<td valign='top'>Filter&nbsp;by&nbsp;State:&nbsp;</td><td>";
-		$view .= "<input type='checkbox' name='filter_state_new'  />&nbsp;New&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_state_active'  />&nbsp;Active&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_state_renewed' />&nbsp;Renewed&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<input type='checkbox' name='filter_state_suspended' />&nbsp;Suspended&nbsp;&nbsp;&nbsp;&nbsp; ";
-		$view .= "<br/>";
-		$view .= "<br/>";
-		$view .= "</td></tr>";
-		if ( $forAdmin ) {
-			$view .= "<tr>";
-			$view .= "<td valign='top'>Filter&nbsp;by&nbsp;Server:&nbsp;</td><td>";
-			foreach ( $BURRO_SERVERS as $my_server ) {
-				$view .= "<input type='checkbox' name='filter_server_".$my_server["name"]."'  />&nbsp;".$my_server["name"]."&nbsp;&nbsp;&nbsp;&nbsp; ";
-			}
-			$view .= "</td></tr>";
-		}
-		$view .= "</table>";
-		$view .= "<br/>";
 
 
 
 
 
 		//then table with services
+		if ( $forAdmin ) {
+			$colSpan = 11;
+		} else {
+			$colSpan = 9;
+		}
 		$view .= "<table class='list'>";
-		$view .= "<thead><tr>";
+		
+		//open table headers
+		$view .= "<thead>";
+		
+		//filters
+		$view .= "<tr>";
+		$view .= "<td valign='top' class='filtersTdContainer' >Filter&nbsp;by&nbsp;Service:&nbsp;</td><td class='filtersTdContainer filtersOptionsContainer' colspan='".($colSpan-1)."'>";
+		$view .= "<input type='checkbox' name='filter_service_domain'  />&nbsp;Domains&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_service_webhosting'  />&nbsp;Webhostings&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_service_webhosting_space'  />&nbsp;Webhostings&nbsp;Space&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_service_webhosting_traffic'  />&nbsp;Webhostings&nbsp;Traffic&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_service_mailbox'  />&nbsp;Mailboxes&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_service_mailbox_space'  />&nbsp;Mailboxes&nbsp;Space&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<br/><input type='checkbox' name='filter_service_custom_service'  />&nbsp;Custom&nbsp;Services&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_service_database'  />&nbsp;Databases&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "</td></tr>";
+		$view .= "<tr>";
+		$view .= "<td valign='top' class='filtersTdContainer' >Filter&nbsp;by&nbsp;State:&nbsp;</td><td class='filtersTdContainer filtersOptionsContainer' colspan='".($colSpan-1)."'>";
+		$view .= "<input type='checkbox' name='filter_state_new'  />&nbsp;New&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_state_active'  />&nbsp;Active&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_state_renewed' />&nbsp;Renewed&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "<input type='checkbox' name='filter_state_suspended' />&nbsp;Suspended&nbsp;&nbsp;&nbsp;&nbsp; ";
+		$view .= "</td></tr>";
+		if ( $forAdmin ) {
+			$view .= "<tr>";
+			$view .= "<td valign='top' class='filtersTdContainer' >Filter&nbsp;by&nbsp;Server:&nbsp;</td><td class='filtersTdContainer filtersOptionsContainer' colspan='".($colSpan-1)."'>";
+			foreach ( $BURRO_SERVERS as $my_server ) {
+				$view .= "<input type='checkbox' name='filter_server_".$my_server["name"]."'  />&nbsp;".$my_server["name"]."&nbsp;&nbsp;&nbsp;&nbsp; ";
+			}
+			$view .= "</td></tr>";
+		}
+		
+		//gantt toggler
+		if ( $forAdmin ) {
+			$toggleNonTimelineImg = 'view/image/read_more_12x12.png';
+		} else {
+			$toggleNonTimelineImg = 'catalog/view/theme/default/image/read_more_12x12.png';
+		}
+		$view .= "<tr><td valign='top' class='filtersTdContainer' >Toggle&nbsp;Gantt&nbsp;View:&nbsp;</td><td colspan='".($colSpan-1)."' class='controlsTdContainer'  ><div class='controlsContainer' ><img id='toggleNonTimeline' src='".$toggleNonTimelineImg."' style='cursor:pointer;' title='Toggle Gantt view'/></div></td></tr><script> 
+					$( document ).ready(function() {
+						$('#toggleNonTimeline').click( function(){
+							$('.list .left').toggle(); 
+						}); 
+					}); 
+			</script>";
+		
+		//headers
+		$view .= "<tr>";
 		if ( $forAdmin ) $view .= "<td class='left'>ID</td>";
 		$view .= "<td class='left'>Product</td>";
 		//$view .= "<td class='left'>Duration</td>";
@@ -511,8 +568,27 @@ class ModelBurroHosting extends Model {
 		} else {
 			$view .= "<td class='left'>Renew</td>";
 		}
-		$view .= "</tr></thead>";
+		$view .= "</tr>";
+		
+		//close table headers
+		$view .= "</thead>";
+
+		//body
 		if ( count( $hostings ) > 0 ) {
+			//prima faccio un giro per trovare min e max date, che mi servono per disegnare la timeline
+			$timelineMin = 999999999999;
+			$timelineMax = 0;
+			$timelineDateNow = new DateTime();
+			foreach ( $hostings as $hosting ) {
+				$timelineDateStart = new DateTime($hosting["date_start"]);
+				$timelineDateEnd = new DateTime($hosting["date_end"]);
+				if ( $timelineDateEnd->getTimestamp() > $timelineMax ) $timelineMax = $timelineDateEnd->getTimestamp();
+				if ( $timelineDateStart->getTimestamp() < $timelineMin ) $timelineMin = $timelineDateStart->getTimestamp();
+			}
+			if ( $timelineDateNow->getTimestamp() > $timelineMax ) $timelineMax = $timelineDateNow->getTimestamp();
+			if ( $timelineDateNow->getTimestamp() < $timelineMin ) $timelineMin = $timelineDateNow->getTimestamp();
+			
+			//poi il ciclo principale per disegnare gli hosting
 			foreach ( $hostings as $hosting ) {
 				//choose color based on state
 				$bgColor = "white";
@@ -533,12 +609,15 @@ class ModelBurroHosting extends Model {
 				$labelAndPriority = $this->getSuspendReminderLabelAndPriority((String)$hosting["date_end"]);
 				$priority = $labelAndPriority[1];
 				$remaining_days = $labelAndPriority[2];
-				if ( $hosting["state"] == "active" ) {
-					$colorCss = "background-color:rgba(255,0,0,".$priority.")";
+				if ( $hosting["state"] == "active" && $priority > 0  ) {
+					$colorCss = "background-color:rgba(255,0,0,".$priority.");";
 				} else {
 					$colorCss = "";
 				}
-
+				
+				//start output
+				
+				//start row with data
 				$view .= "<tr>";
 				
 				if ( $forAdmin ) $view .= "<td class='left element_order_hosting_id' style='".$colorCss."' >".$hosting["order_hosting_id"]."</td>";
@@ -548,7 +627,14 @@ class ModelBurroHosting extends Model {
 				} else {
 					$product_name = "";
 				}
-				$view .= "<td class='left' style='".$colorCss."' ><h3>".$product_name."</h3></td>";
+				if ( isset( $hosting["product_details"]["image"] ) && $hosting["product_details"]["image"] != "" ) {
+					$this->load->model('tool/image');
+					$product_image = "<img class='hostingImage' src='".$this->model_tool_image->resize($hosting["product_details"]["image"], 47, 47)."' />"; //tengo le stesse dimensioni delle thumb del cart, così non ne genera inutilmente troppe
+				} else { 
+					$product_image = "";
+				}
+				
+				$view .= "<td class='left' style='".$colorCss."' >".$product_image."<h3>".$product_name."</h3></td>";
 				
 				if ( $hosting["domain"] != "" ) {
 					$view .= "<td class='left element_domain' style='".$colorCss."' >".$hosting["domain"]."</td>";
@@ -627,34 +713,31 @@ class ModelBurroHosting extends Model {
 						$view .= "<td class='left' style='".$colorCss."' ></td>";
 					}
 				}
-
-				
 				$view .= "</tr>";
+				//end row with data
+				
+				//start row with timeline
+				$view .= "<tr><td colspan='".$colSpan."' class='timelineTdContainer' ><div class='timelineContainer' id='timelineContainer".$hosting["order_hosting_id"]."'  style='".$colorCss."'  ><div class='timelineService' id='timelineService".$hosting["order_hosting_id"]."' title='".$product_name." service duration / durata del servizio ".$product_name."' ></div><div class='timelineCursor' id='timelineCursor".$hosting["order_hosting_id"]."' title='today / oggi' ></div></div></td></tr><script> 
+					$( document ).ready(function() { drawHostingTimeline('".$hosting["order_hosting_id"]."', '".$hosting["date_start"]."','".$hosting["date_end"]."','".$hosting["state"]."','".date('Y-m-d H:i:s',$timelineMin)."','".date('Y-m-d H:i:s',$timelineMax)."','".$bgColor."'); }); 
+				 </script>";
+				//end row with timeline
+				
+				//end output
 			}
 		} else {
 			//no hostings available
-			if ( $forAdmin ) {
-				$colSpan = 11;
-			} else {
-				$colSpan = 8;
-			}
 			$view .= "<tr>";
 			$view .= "<td class='left' colspan='".$colSpan."'><i>No Services found.</i></td>";
 			$view .= "</tr>";
 		}
 		$view .= "</table>";
 		
-		
-		
-		
-		
-		
-		
-		
 		return $view;
 
 	}
-	
+
+
+
 	public function getHostingCustomers() { 
 		$query = "SELECT DISTINCT  ".DB_PREFIX."customer.customer_id, ".DB_PREFIX."customer.lastname, ".DB_PREFIX."customer.firstname, ".DB_PREFIX."customer.email FROM ".DB_PREFIX."customer INNER JOIN ".DB_PREFIX."order ON ".DB_PREFIX."customer.customer_id = ".DB_PREFIX."order.customer_id INNER JOIN ".DB_PREFIX."order_hosting ON ".DB_PREFIX."order_hosting.order_id = ".DB_PREFIX."order.order_id ";
 		$query .= " WHERE 1 = 1 ";
